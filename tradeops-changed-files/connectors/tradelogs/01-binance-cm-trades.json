@@ -1,0 +1,12 @@
+{
+  "type": "s3",
+  "region": "us-east-1",
+  "anonymous": true,
+  "bucket": "data.binance.vision",
+  "prefix": "data/futures/cm/daily/trades/",
+  "dataset": "binance_cm",
+  "suffix": ".zip",
+  "max_objects": 1,
+  "max_listed": 100,
+  "checksum": true
+}
