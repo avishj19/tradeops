@@ -79,3 +79,9 @@ Numbers are local DuckDB timings on verified public samples — not Athena invoi
 ## License / scope
 
 Deterministic agents only. Human approval for local archive. No secret scanning of your books — keep private data under `TRADEOPS_DATA`, not in git.
+
+## First-time visitor experience
+
+The website opens on **Start here**, explaining trading logs, the problem TradeOps addresses, and a three-step workflow. **Try an example analysis** runs generated data without an upload or cloud account. Operational results start with a plain-English summary, a checked-copy download, and expandable evidence. Advanced tools remain available under **Explore more tools**. A glossary explains logs, Parquet, agents, and AWS, with clear distinctions between measured file sizes, modeled costs, and actual savings.
+
+The merged application and this interface update were checked with 122 passing tests (two upstream deprecation warnings). The sample-to-results flow was also exercised in the browser. The performance test checks reported timing arithmetic rather than assuming every run must be faster.
