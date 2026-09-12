@@ -215,7 +215,7 @@ Articles supplied design guidance, not instructions to deploy paid services or e
 5. Expanded History into searchable recorded activity with details, source references, reports and downloads.
 6. Consolidated this README, specialized guides, provenance and tests for maintainers.
 
-See [VALIDATION.md](VALIDATION.md) for recorded checks. The current suite has **76 passing tests**. Known upstream test-client deprecation warnings do not represent failed tests. UI verification covered populated results, archive cancellation, network calculation, real sample import, history search and detail expansion. No claim is made of exhaustive accessibility, browser or production load testing.
+See [VALIDATION.md](VALIDATION.md) for recorded checks. The current suite has **85 passing tests**. Known upstream test-client deprecation warnings do not represent failed tests. UI verification covered populated results, archive cancellation, network calculation, real sample import, history search and detail expansion. No claim is made of exhaustive accessibility, browser or production load testing.
 
 ## Code map for debugging
 
@@ -351,3 +351,32 @@ Conversion is timed once. Download/normalization and the search/verification cos
 are excluded from projected candidate totals; total experiment elapsed time is
 reported separately. Do not claim net optimizer savings without amortizing those
 costs over actual future use. Original ZIPs and baseline gzip remain retained.
+
+
+## Cost scenarios from measured data
+
+Experiment lab now has an editable cost calculator (`POST /api/experiments/cost`).
+It uses the recorded dataset sizes and local calibration query medians, with inputs
+for monthly query count, months, assumed metered compute USD/hour, storage USD/GiB-month,
+workload mix and additional one-time costs. `backend/experiment_costs.py` calculates
+before/after component costs, net savings and break-even months. It selects the
+lowest modeled cost, including keeping the baseline.
+
+Original ZIPs and the canonical gzip remain stored in every scenario. Converted
+copies add storage. By default the complete measured experiment duration is charged
+once as setup for each alternative; this already includes conversion and is not
+added twice. Turning off that overhead excludes search/preparation but still charges
+conversion. This is a prospective scenario; no cloud spending or actions occur.
+
+The example in `benchmarks/cost-example.json` uses 10,000 selective queries/month,
+one month, assumed $0.10/hour compute and illustrative $0.023/GiB-month storage:
+$0.148246 baseline vs $0.011603 partitioned Parquet, approximately $0.136642 saved.
+The percentage is large but absolute savings are tiny on this dataset. Actual cash
+savings require reducing billable compute rather than leaving the same server idle.
+No claim is made that local execution matches the performance of a particular AWS instance.
+
+Athena uses scanned-data pricing, so local runtime is not used to claim Athena
+savings. See https://aws.amazon.com/athena/pricing/ and https://aws.amazon.com/s3/pricing/
+for current region/service pricing. Request charges, transfers, billing minimums,
+network services, labor, and other services are not calculated. Measured Athena scan
+bytes and actual infrastructure charges are needed for a defensible AWS total.

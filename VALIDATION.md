@@ -39,3 +39,10 @@ After merging the separately authored catalogue/SingleStore changes, installed t
 LZ4 dependency and added it to pyproject.toml. Combined suite: **76 passed**, with
 two upstream deprecation warnings. The four-layout benchmark is independent of those
 source-adapter changes.
+
+## Cost calculator
+
+85 tests pass (two upstream warnings). Nine new cases cover retained originals,
+no double-counting conversion, low-use losses, sunk search overhead, zero rates,
+and invalid inputs. Browser verification confirmed the default calculation and
+that one monthly query switches the recommendation to keep CSV.

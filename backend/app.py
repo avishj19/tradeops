@@ -138,3 +138,11 @@ def latest_experiment():
     path=ROOT/'benchmarks'/'latest.json'
     if not path.exists():raise HTTPException(404,'Run python -m scripts.benchmark_lab to create measurements.')
     return FileResponse(path,media_type='application/json')
+
+from .experiment_costs import CostScenario, estimate_costs
+
+@app.post('/api/experiments/cost')
+def experiment_cost(body: CostScenario):
+    path=ROOT/'benchmarks'/'latest.json'
+    if not path.exists():raise HTTPException(404,'Run the benchmark first.')
+    return estimate_costs(json.loads(path.read_text()),body)

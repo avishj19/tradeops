@@ -1,0 +1,74 @@
+{
+  "scenario": {
+    "queries_per_month": 10000,
+    "months": 1,
+    "compute_per_hour": 0.1,
+    "storage_per_gib_month": 0.023,
+    "workload": "selective",
+    "include_experiment_overhead": true,
+    "additional_setup_usd": 0
+  },
+  "data_rows": 1350922,
+  "measured_at": "2026-09-12T01:05:51.886437+00:00",
+  "recommended": "partitioned",
+  "candidates": [
+    {
+      "layout": "csv_gzip",
+      "query_seconds": 0.5300019169808365,
+      "retained_bytes": 47757014,
+      "monthly_storage_usd": 0.0010229752603918313,
+      "monthly_query_compute_usd": 0.14722275471689905,
+      "setup_usd": 0,
+      "total_usd": 0.14824572997729088,
+      "savings_usd": 0.0,
+      "savings_pct": 0.0,
+      "break_even_months": null
+    },
+    {
+      "layout": "parquet",
+      "query_seconds": 0.028246291010873392,
+      "retained_bytes": 67860232,
+      "monthly_storage_usd": 0.0014535946175456046,
+      "monthly_query_compute_usd": 0.007846191947464831,
+      "setup_usd": 0.0036449974872496873,
+      "total_usd": 0.012944784052260122,
+      "savings_usd": 0.13530094592503075,
+      "savings_pct": 91.26802232061384,
+      "break_even_months": 0.026233205502331575
+    },
+    {
+      "layout": "partitioned",
+      "query_seconds": 0.023415499978000298,
+      "retained_bytes": 67878767,
+      "monthly_storage_usd": 0.0014539916450157762,
+      "monthly_query_compute_usd": 0.006504305549444527,
+      "setup_usd": 0.0036449974872496873,
+      "total_usd": 0.01160329468170999,
+      "savings_usd": 0.1366424352955809,
+      "savings_pct": 92.17293160249038,
+      "break_even_months": 0.025982352196096282
+    },
+    {
+      "layout": "partitioned_csv",
+      "query_seconds": 0.10799962500459515,
+      "retained_bytes": 71503794,
+      "monthly_storage_usd": 0.0015316412430256604,
+      "monthly_query_compute_usd": 0.029999895834609765,
+      "setup_usd": 0.0036449974872496873,
+      "total_usd": 0.03517653456488511,
+      "savings_usd": 0.11306919541240576,
+      "savings_pct": 76.27146861479676,
+      "break_even_months": 0.031230113465150366
+    }
+  ],
+  "assumptions": [
+    "USD scenario estimate using local DuckDB calibration medians; not measured AWS performance or a bill.",
+    "Compute rate is user-assumed, not an AWS instance quote. Savings require avoiding metered compute; an always-on fixed-size server may save no cash.",
+    "Storage rate is editable and illustrative. GiB = 2^30 bytes. Regional tiers, discounts and taxes are not modeled.",
+    "Every choice retains original ZIP archives and canonical gzip; conversions add storage. No deletion or archive assumed.",
+    "One-time experiment overhead includes preparation and conversions; it is conservatively charged once to each alternative, never twice. Disable only if it is already a sunk cost.",
+    "No extrapolation to larger datasets: query frequency changes, measured dataset size stays fixed.",
+    "Athena charges by scanned bytes, not local query seconds. Athena savings are not calculated without scan measurements.",
+    "Requests, transfer, Glue, catalog, network endpoints, billing minimums, idle capacity and operations labor are excluded unless covered by the additional setup allowance."
+  ]
+}
