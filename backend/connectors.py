@@ -15,13 +15,20 @@ def bounded(stream):
     if len(data)>LIMIT:raise ValueError('Input exceeds 20 MiB; rotate/batch smaller files.')
     return data
 
-def records(data,fmt):
+def records(data,fmt,delimiter=None):
+    from .datasets import unpack,sniff_reader
+    data=unpack(data,'')  # transparent gz/lz4 by magic; zip needs a name so stays dataset-only
     text=data.decode('utf-8-sig')
     if fmt=='json':rows=json.loads(text)
-    elif fmt=='csv':rows=list(csv.DictReader(io.StringIO(text)))
+    elif fmt in ('csv','tsv'):
+        if delimiter:rows=list(csv.DictReader(io.StringIO(text),delimiter=delimiter))
+        elif fmt=='tsv':rows=list(csv.DictReader(io.StringIO(text),delimiter='\t'))
+        else:
+            reader,d=sniff_reader(text);rows=list(reader)
+            if rows and len(rows[0])==1 and ('\t' in next(iter(rows[0])) or ';' in next(iter(rows[0]))):raise ValueError('CSV parsed to a single column; the file looks delimited by something other than a comma. Set "delimiter" or format "tsv".')
     elif fmt=='jsonl':rows=[json.loads(x) for x in text.splitlines() if x.strip()]
     elif fmt=='text':rows=[{'message':line} for line in text.splitlines()]
-    else:raise ValueError('format must be csv, json, jsonl or text')
+    else:raise ValueError('format must be csv, tsv, json, jsonl or text')
     if not isinstance(rows,list) or not rows or len(rows)>200000 or any(not isinstance(r,dict) for r in rows):raise ValueError('Expected 1–200,000 record objects.')
     return rows
 
@@ -31,9 +38,11 @@ class Runner:
         self.db=sqlite3.connect(self.root/'tradeops.db')
         self.db.execute('CREATE TABLE IF NOT EXISTS runs (id TEXT PRIMARY KEY,payload TEXT NOT NULL)')
         self.db.execute('CREATE TABLE IF NOT EXISTS connector_state (key TEXT PRIMARY KEY,value TEXT NOT NULL)')
-        self.namespace=digest(json.dumps(config,sort_keys=True).encode())
+        identity={k:config[k] for k in ('type','bucket','prefix','keys','path','pattern','dataset','format','mapping','log_group','filter_pattern','recursive','delimiter') if k in config}
+        self.namespace=digest(json.dumps(identity,sort_keys=True).encode())
         self.session=session
         if config['type'] not in ('folder','s3','cloudwatch'):raise ValueError('Unknown connector type')
+        self.failures=[]
     def state(self,key,default=None):
         r=self.db.execute('SELECT value FROM connector_state WHERE key=?',(self.namespace+':'+key,)).fetchone()
         return json.loads(r[0]) if r else default
@@ -48,15 +57,33 @@ class Runner:
         options=dict(connect_timeout=10,read_timeout=30,retries={'mode':'standard','max_attempts':3})
         if self.config.get('anonymous'):options['signature_version']=UNSIGNED
         return self.session.client(name,config=Config(**options))
+    def s3args(self):
+        if not self.config.get('request_payer'):return {}
+        if self.config.get('accept_requester_pays_charges') is not True:raise ValueError('request_payer is set but accept_requester_pays_charges is not true. Your AWS account will be billed for requests and transfer; set it explicitly to proceed.')
+        if self.config.get('anonymous'):raise ValueError('Requester-pays buckets need signed requests; remove "anonymous".')
+        return {'RequestPayer':'requester'}
     def ingest(self,data,identity,name,fmt=None):
         key=digest((self.namespace+identity+digest(data)).encode())
         if self.state(key):return False
-        rows=None if self.config.get('dataset') else records(data,fmt or self.config['format'])
+        if not self.config.get('dataset') and not (fmt or self.config.get('format')):raise ValueError('Connector config needs either "dataset" (market data) or "format" (csv/tsv/json/jsonl/text).')
+        try:return self._ingest(data,identity,name,fmt,key)
+        except Exception:
+            import shutil;shutil.rmtree(self.root/key,ignore_errors=True);raise
+    def safe_ingest(self,data,identity,name,fmt=None):
+        # Per-object isolation for scans: one bad file must not abort or wedge the prefix.
+        try:return self.ingest(data,identity,name,fmt)
+        except (ValueError,UnicodeDecodeError,KeyError,OSError) as e:
+            self.failures.append({'source':identity,'name':name,'error':str(e)});return False
+    def _ingest(self,data,identity,name,fmt,key):
+        rows=None if self.config.get('dataset') else records(data,fmt or self.config['format'],self.config.get('delimiter'))
         mapping=self.config.get('mapping',{})
         folder=self.root/key;folder.mkdir(exist_ok=True)
         if self.config.get('dataset'):
             symbol=self.config.get('symbol','')
-            if self.config['dataset'] in ('binance','binance_um') and not symbol:symbol=name.split('-trades-')[0]
+            if self.config['dataset'].startswith('binance') and not symbol:
+                import re;m=re.match(r'^([A-Za-z0-9_]+)-(?:agg)?[Tt]rades-',name)
+                if not m:raise ValueError('Cannot derive symbol from '+name+'; set "symbol" in the config.')
+                symbol=m.group(1)
             result=optimize_market(data,name,self.config['dataset'],folder/'optimized',symbol)
         elif mapping:
             normalized=[]
@@ -94,14 +121,17 @@ class Runner:
         if not root.is_dir():raise ValueError('Folder path must be a directory')
         imported=0
         # Nonrecursive by design. Read closed/rotated files, not active tails.
-        for p in sorted(root.glob(self.config.get('pattern','*.jsonl'))):
-            if p.is_symlink() or not p.is_file() or p.resolve().parent!=root:continue
+        pattern=self.config.get('pattern','*.jsonl');recursive=bool(self.config.get('recursive'))
+        for p in sorted(root.rglob(pattern) if recursive else root.glob(pattern)):
+            if p.is_symlink() or not p.is_file():continue
+            if not recursive and p.resolve().parent!=root:continue
+            if recursive and root not in p.resolve().parents:continue
             st=p.stat()
             if time.time()-st.st_mtime<self.config.get('settle_seconds',60):continue
             with p.open('rb') as f:data=bounded(f)
             after=p.stat()
             if (st.st_size,st.st_mtime_ns,st.st_ino)!=(after.st_size,after.st_mtime_ns,after.st_ino):continue
-            imported+=self.ingest(data,str(p),p.name)
+            imported+=self.safe_ingest(data,str(p),p.name)
         return imported
     def discover(self):
         if self.config.get('blocked_reason'):raise ValueError(self.config['blocked_reason'])
@@ -111,10 +141,10 @@ class Runner:
         if keys:
             for key in keys:
                 if not key.startswith(prefix):raise ValueError('Selected key outside configured prefix')
-                r=client.head_object(Bucket=bucket,Key=key)
+                r=client.head_object(Bucket=bucket,Key=key,**self.s3args())
                 yield {'Key':key,'Size':r['ContentLength'],'ETag':r['ETag']}
             return
-        args=dict(Bucket=bucket,Prefix=prefix,PaginationConfig={'PageSize':100,'MaxItems':min(1000,int(self.config.get('max_listed',100)))})
+        args=dict(Bucket=bucket,Prefix=prefix,**self.s3args(),PaginationConfig={'PageSize':100,'MaxItems':min(1000,int(self.config.get('max_listed',100)))})
         if self.config.get('start_after'):args['StartAfter']=self.config['start_after']
         for page in client.get_paginator('list_objects_v2').paginate(**args):
             yield from page.get('Contents',[])
@@ -127,17 +157,17 @@ class Runner:
             marker='s3:'+key+':'+obj['ETag']
             if self.state(marker):continue
             if downloaded>=int(self.config.get('max_objects',3)):break
-            r=client.get_object(Bucket=bucket,Key=key,IfMatch=obj['ETag'])
+            r=client.get_object(Bucket=bucket,Key=key,IfMatch=obj['ETag'],**self.s3args())
             try:data=bounded(r['Body'])
             finally:r['Body'].close()
             downloaded+=1
             if self.config.get('checksum'):
-                check=client.get_object(Bucket=bucket,Key=key+'.CHECKSUM')
+                check=client.get_object(Bucket=bucket,Key=key+'.CHECKSUM',**self.s3args())
                 try:expected=check['Body'].read(4096).decode().split()[0]
                 finally:check['Body'].close()
                 if digest(data)!=expected:raise ValueError('Publisher checksum mismatch: '+key)
-            imported+=self.ingest(data,'s3://'+bucket+'/'+key+':'+r.get('VersionId',obj['ETag']),Path(key).name)
-            with self.db:self.put(marker,True)
+            imported+=self.safe_ingest(data,'s3://'+bucket+'/'+key+':'+r.get('VersionId',obj['ETag']),Path(key).name)
+            with self.db:self.put(marker,True)  # marked even on parse failure; a new ETag or config identity will retry
         return imported
     def cloudwatch(self):
         client=self.client('logs');group=self.config['log_group']
@@ -176,15 +206,27 @@ def main():
     if args.interval and args.interval<60:p.error('interval must be at least 60 seconds')
     config=json.loads(Path(args.config).read_text())
     application.DATA.mkdir(parents=True,exist_ok=True)
+    import sys
     with (application.DATA/'connector.lock').open('a') as lock:
-        fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
-        runner=Runner(config)
+        try:fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
+        except BlockingIOError:sys.exit('Another connector process holds the lock; stop it first.')
+        try:runner=Runner(config)
+        except (ValueError,KeyError) as e:sys.exit('Config error: '+str(e))
         try:
             while True:
                 if args.list:
                     print(json.dumps(list(runner.discover()),default=str,indent=2));break
-                print(json.dumps({'imported':runner.run(),'source':config['type']}),flush=True)
+                n=runner.run();out={'imported':n,'failed':len(runner.failures),'source':config['type']}
+                if runner.failures:out['failures']=runner.failures
+                print(json.dumps(out),flush=True);runner.failures.clear()
                 if not args.interval:break
                 time.sleep(args.interval)
+        except Exception as e:
+            import botocore.exceptions as be
+            if isinstance(e,be.ClientError):
+                code=e.response.get('Error',{}).get('Code','')
+                hint={'403':' (AccessDenied: for requester-pays buckets set request_payer and accept_requester_pays_charges with signed credentials)','AccessDenied':' (AccessDenied: for requester-pays buckets set request_payer and accept_requester_pays_charges with signed credentials)','NoSuchBucket':' (bucket not found)','PreconditionFailed':' (object changed after listing; rescan)'}.get(code,'')
+                sys.exit(f'S3 error {code}{hint}: {e}')
+            sys.exit(f'{type(e).__name__}: {e}')
         finally:runner.close()
 if __name__=='__main__':main()

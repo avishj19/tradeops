@@ -49,7 +49,8 @@ def process(data,name,scenario='uploaded'):
     id=uuid.uuid4().hex
     folder=DATA/id;folder.mkdir()
     try:result=SupervisorAgent().run(data,name,folder/'optimized')
-    except ValueError as e:raise HTTPException(422,str(e))
+    except ValueError as e:
+        import shutil;shutil.rmtree(folder,ignore_errors=True);raise HTTPException(422,str(e))
     (folder/('raw'+Path(name).suffix.lower())).write_bytes(data)
     run=dict(id=id,name=Path(name).name,scenario=scenario,created=datetime.now(timezone.utc).isoformat(),approval='pending' if result['storage']['eligible'] else 'not_required',**result)
     save(run);return run
@@ -58,7 +59,8 @@ def process_market(data,name,source,symbol='',timezone_name='Etc/GMT+5'):
     id=uuid.uuid4().hex
     folder=DATA/id;folder.mkdir()
     try:result=optimize_market(data,name,source,folder/'optimized',symbol,timezone_name)
-    except ValueError as e:raise HTTPException(422,str(e))
+    except ValueError as e:
+        import shutil;shutil.rmtree(folder,ignore_errors=True);raise HTTPException(422,str(e))
     (folder/'raw.source').write_bytes(data)
     run=dict(id=id,name=Path(name).name,scenario=source,created=datetime.now(timezone.utc).isoformat(),**result)
     save(run);return run

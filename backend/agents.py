@@ -34,7 +34,13 @@ class LogAnalysisAgent:
                     raise ValueError('Records must have consistent columns and non-null scalar values.')
                 if any(not str(r[k]).strip() for k in REQUIRED):
                     raise ValueError('Required fields cannot be empty.')
-                t=datetime.fromisoformat(str(r['timestamp']).replace('Z','+00:00'))
+                ts=r['timestamp']
+                if isinstance(ts,(int,float)) or (isinstance(ts,str) and ts.isdigit()):
+                    n=int(ts);unit=1000000 if n>=100000000000000 else (1000 if n>=100000000000 else 1)
+                    t=datetime.fromtimestamp(n/unit,tz=timezone.utc)
+                else:
+                    try:t=datetime.fromisoformat(str(ts).replace('Z','+00:00'))
+                    except ValueError:raise ValueError('Timestamps must be ISO-8601 with timezone or an epoch in s/ms/us; got '+repr(ts)[:40])
                 if t.tzinfo is None: raise ValueError('Timestamps must include a timezone.')
                 latency=float(r['latency_ms'])
                 if not math.isfinite(latency) or latency<0: raise ValueError('Latency must be finite and non-negative.')
