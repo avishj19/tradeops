@@ -47,6 +47,7 @@ Otherwise, the application stores results in the repository's `data/` directory:
 data/
   tradeops.db                    Default-desk SQLite (run summaries + full payloads + connector checkpoints)
   desks/<desk-id>/tradeops.db    Optional extra desk databases (header X-TradeOps-Desk)
+  optimize-arena-latest.json     Last live before/after optimization measurement (HackCMU pitch view)
   <run-id>/
     raw.*                        Original bytes / source evidence
     optimized/logs.parquet       Verified analytical output
