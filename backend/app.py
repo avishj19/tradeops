@@ -273,11 +273,16 @@ def demo(body:Demo):
 
 @app.post('/api/upload')
 async def upload(file:UploadFile=File(...)):
+    from .ingest import allowed_upload_name, maybe_decompress
     name=file.filename or ''
-    if Path(name).suffix.lower() not in ['.csv','.json']:raise HTTPException(422,'Choose a CSV or JSON file.')
+    if not allowed_upload_name(name):raise HTTPException(422,'Choose a CSV or JSON file (optionally .gz).')
     data=await file.read(20*1024*1024+1)
     if len(data)>20*1024*1024:raise HTTPException(413,'Maximum file size is 20 MiB.')
-    return process(data,name)
+    try:
+        data, name = maybe_decompress(data, name)
+    except ValueError as e:
+        raise HTTPException(422, str(e))
+    return process(data, name)
 
 @app.post('/api/runs/{id}/decision')
 def decision(id:str,body:Decision):
