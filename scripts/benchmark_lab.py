@@ -5,6 +5,7 @@ from pathlib import Path
 import certifi
 import duckdb
 from backend.experiments import choose_layout
+from backend.layout_policy import verify_relations
 
 ROOT=Path(__file__).resolve().parents[1]
 MAX_ARCHIVE=20*1024*1024
@@ -77,9 +78,9 @@ def run():
     con.execute(f"CREATE VIEW partitioned_csv AS SELECT {','.join(columns)} FROM read_csv({literal(csv_glob)},header=true,columns={partial_schema},auto_detect=false,hive_partitioning=true,hive_types={{'date':VARCHAR,'symbol':VARCHAR}})")
     verified={}
     for name in paths:
-        mismatch=con.execute(f'SELECT count(*) FROM ((SELECT * FROM csv_gzip EXCEPT ALL SELECT * FROM {name}) UNION ALL (SELECT * FROM {name} EXCEPT ALL SELECT * FROM csv_gzip))').fetchone()[0]
-        verified[name]=mismatch==0
-        if mismatch:raise ValueError(f'Record preservation failed: {name}')
+        check=verify_relations(con,'csv_gzip',name)
+        verified[name]=check['verified']
+        if not check['verified']:raise ValueError(f'Record preservation failed: {name}: {check}')
     queries={
         'selective':"SELECT count(*), sum(CAST(quantity AS DECIMAL(28,8))) FROM {table} WHERE symbol='BTCUSDT' AND date='2020-01-02' AND CAST(timestamp_ms AS BIGINT) BETWEEN 1577923200000 AND 1577926800000",
         'daily_volume':"SELECT date,symbol,count(*),sum(CAST(quantity AS DECIMAL(28,8))) FROM {table} GROUP BY date,symbol ORDER BY date,symbol",

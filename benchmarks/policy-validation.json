@@ -1,0 +1,1305 @@
+{
+  "created": "2026-09-12T02:14:15.075883+00:00",
+  "sources": [
+    {
+      "url": "https://data.binance.vision/data/spot/daily/trades/BTCUSDT/BTCUSDT-trades-2020-01-01.zip",
+      "checksum_url": "https://data.binance.vision/data/spot/daily/trades/BTCUSDT/BTCUSDT-trades-2020-01-01.zip.CHECKSUM",
+      "sha256": "e710f3819a54c46a78188f67043b4de7d8914cfda8abb5f0075eb4a4d90bd042",
+      "archive_bytes": 3510443,
+      "expanded_bytes": 14027980,
+      "rows": 194010
+    },
+    {
+      "url": "https://data.binance.vision/data/spot/daily/trades/BTCUSDT/BTCUSDT-trades-2020-01-02.zip",
+      "checksum_url": "https://data.binance.vision/data/spot/daily/trades/BTCUSDT/BTCUSDT-trades-2020-01-02.zip.CHECKSUM",
+      "sha256": "1a46e41ce48ba235a5db0d54be608e13c247ea5df41f93939c946030eac3e1b7",
+      "archive_bytes": 5420667,
+      "expanded_bytes": 21893679,
+      "rows": 302667
+    },
+    {
+      "url": "https://data.binance.vision/data/spot/daily/trades/BTCUSDT/BTCUSDT-trades-2020-01-03.zip",
+      "checksum_url": "https://data.binance.vision/data/spot/daily/trades/BTCUSDT/BTCUSDT-trades-2020-01-03.zip.CHECKSUM",
+      "sha256": "4d6e6e342799433f98f8ff7a414d83868aa611ba68d3fc4a1c17edd3ec2d8acc",
+      "archive_bytes": 9381069,
+      "expanded_bytes": 37632723,
+      "rows": 519854
+    },
+    {
+      "url": "https://data.binance.vision/data/spot/daily/trades/ETHUSDT/ETHUSDT-trades-2020-01-01.zip",
+      "checksum_url": "https://data.binance.vision/data/spot/daily/trades/ETHUSDT/ETHUSDT-trades-2020-01-01.zip.CHECKSUM",
+      "sha256": "df1f7dda442673eac73849646223761492bd0f445aa64e82c332d6015c9e9fab",
+      "archive_bytes": 1285210,
+      "expanded_bytes": 5384759,
+      "rows": 75888
+    },
+    {
+      "url": "https://data.binance.vision/data/spot/daily/trades/ETHUSDT/ETHUSDT-trades-2020-01-02.zip",
+      "checksum_url": "https://data.binance.vision/data/spot/daily/trades/ETHUSDT/ETHUSDT-trades-2020-01-02.zip.CHECKSUM",
+      "sha256": "02a9c29dc7b0f20424d0dc18d91464d5b46d1e0ed4bb8220da2c9acdc0a14506",
+      "archive_bytes": 1624679,
+      "expanded_bytes": 6833125,
+      "rows": 96193
+    },
+    {
+      "url": "https://data.binance.vision/data/spot/daily/trades/ETHUSDT/ETHUSDT-trades-2020-01-03.zip",
+      "checksum_url": "https://data.binance.vision/data/spot/daily/trades/ETHUSDT/ETHUSDT-trades-2020-01-03.zip.CHECKSUM",
+      "sha256": "428220362d77e08e8350b1a8cce661076bde80f1d021a63a4c87d79c47d9ffb3",
+      "archive_bytes": 2713884,
+      "expanded_bytes": 11550008,
+      "rows": 162310
+    }
+  ],
+  "records": {
+    "calibration": {
+      "date": "2020-01-01",
+      "rows": 269898,
+      "checks": {
+        "csv_gzip": {
+          "verified": true,
+          "reason": "equal",
+          "differing_rows": 0
+        },
+        "parquet": {
+          "verified": true,
+          "reason": "equal",
+          "differing_rows": 0
+        },
+        "partitioned": {
+          "verified": true,
+          "reason": "equal",
+          "differing_rows": 0
+        },
+        "partitioned_csv": {
+          "verified": true,
+          "reason": "equal",
+          "differing_rows": 0
+        }
+      },
+      "candidates": [
+        {
+          "layout": "csv_gzip",
+          "verified": true,
+          "conversion_s": 0,
+          "extra_bytes": 0,
+          "samples": {
+            "point": [
+              0.21822162499302067,
+              0.235422791010933,
+              0.19312870799330994
+            ],
+            "scan": [
+              0.3521312500233762,
+              0.3527402500039898,
+              0.33923595800297335
+            ],
+            "id_lookup": [
+              0.20409295900026336,
+              0.21160562502336688,
+              0.20917658298276365
+            ]
+          }
+        },
+        {
+          "layout": "parquet",
+          "verified": true,
+          "conversion_s": 0.827391083992552,
+          "extra_bytes": 4002088,
+          "samples": {
+            "point": [
+              0.013486875017406419,
+              0.013818666979204863,
+              0.018320292001590133
+            ],
+            "scan": [
+              0.1887047500058543,
+              0.16458725000848062,
+              0.16455804198631085
+            ],
+            "id_lookup": [
+              0.013115333014866337,
+              0.013329875015188009,
+              0.01351262500975281
+            ]
+          }
+        },
+        {
+          "layout": "partitioned",
+          "verified": true,
+          "conversion_s": 0.9090585420199204,
+          "extra_bytes": 3983110,
+          "samples": {
+            "point": [
+              0.014152707997709513,
+              0.012898457993287593,
+              0.013247584021883085
+            ],
+            "scan": [
+              0.16394208298879676,
+              0.2678386249754112,
+              0.16370858400478028
+            ],
+            "id_lookup": [
+              0.0018303329998161644,
+              0.0045049579930491745,
+              0.001645875017857179
+            ]
+          }
+        },
+        {
+          "layout": "partitioned_csv",
+          "verified": true,
+          "conversion_s": 1.7994195829960518,
+          "extra_bytes": 4833969,
+          "samples": {
+            "point": [
+              0.1619637919939123,
+              0.13955108300433494,
+              0.14012499997625127
+            ],
+            "scan": [
+              0.3102736250148155,
+              0.3138590829912573,
+              0.3165337909886148
+            ],
+            "id_lookup": [
+              0.1809267080097925,
+              0.18034129100851715,
+              0.18350579199614003
+            ]
+          }
+        }
+      ],
+      "queries": {
+        "point": "SELECT count(*),sum(CAST(quantity AS DECIMAL(28,8))) FROM {table} WHERE symbol='BTCUSDT' AND CAST(timestamp_ms AS BIGINT) < 1577840400000",
+        "scan": "SELECT symbol,sum(CAST(quote_quantity AS DECIMAL(28,8))),sum(CAST(quantity AS DECIMAL(28,8))) FROM {table} GROUP BY symbol ORDER BY symbol",
+        "id_lookup": "SELECT * FROM {table} WHERE trade_id IN ('210000000','49000000') ORDER BY ALL"
+      },
+      "elapsed_s": 20.668767541006673
+    },
+    "holdout": {
+      "date": "2020-01-03",
+      "rows": 682164,
+      "checks": {
+        "csv_gzip": {
+          "verified": true,
+          "reason": "equal",
+          "differing_rows": 0
+        },
+        "parquet": {
+          "verified": true,
+          "reason": "equal",
+          "differing_rows": 0
+        },
+        "partitioned": {
+          "verified": true,
+          "reason": "equal",
+          "differing_rows": 0
+        },
+        "partitioned_csv": {
+          "verified": true,
+          "reason": "equal",
+          "differing_rows": 0
+        }
+      },
+      "candidates": [
+        {
+          "layout": "csv_gzip",
+          "verified": true,
+          "conversion_s": 0,
+          "extra_bytes": 0,
+          "samples": {
+            "point": [
+              0.35945524999988265,
+              0.4114082499872893,
+              0.48723516598693095
+            ],
+            "scan": [
+              0.9986754170095082,
+              0.9010181669727899,
+              1.0624691669945605
+            ],
+            "id_lookup": [
+              0.39770191701245494,
+              0.47094558298704214,
+              0.40174429200123996
+            ]
+          }
+        },
+        {
+          "layout": "parquet",
+          "verified": true,
+          "conversion_s": 0.8955333330086432,
+          "extra_bytes": 10214210,
+          "samples": {
+            "point": [
+              0.035250292014097795,
+              0.04051974997855723,
+              0.040929125010734424
+            ],
+            "scan": [
+              0.4335647920088377,
+              0.4348326250037644,
+              0.5271970829926431
+            ],
+            "id_lookup": [
+              0.013934707996668294,
+              0.016152374999364838,
+              0.01746629099943675
+            ]
+          }
+        },
+        {
+          "layout": "partitioned",
+          "verified": true,
+          "conversion_s": 1.0471443749847822,
+          "extra_bytes": 10197086,
+          "samples": {
+            "point": [
+              0.030257083009928465,
+              0.03771695800242014,
+              0.03783854198991321
+            ],
+            "scan": [
+              0.43030300000100397,
+              0.5320908749999944,
+              0.5155022089893464
+            ],
+            "id_lookup": [
+              0.001669749995926395,
+              0.0018634590087458491,
+              0.0017031250172294676
+            ]
+          }
+        },
+        {
+          "layout": "partitioned_csv",
+          "verified": true,
+          "conversion_s": 3.0405950419954024,
+          "extra_bytes": 12197754,
+          "samples": {
+            "point": [
+              0.28164904200821184,
+              0.3278559170139488,
+              0.2816029170062393
+            ],
+            "scan": [
+              0.7525947499962058,
+              0.8612574160215445,
+              0.8848976670124102
+            ],
+            "id_lookup": [
+              0.3764531660126522,
+              0.3876911249826662,
+              0.4960263330140151
+            ]
+          }
+        }
+      ],
+      "queries": {
+        "point": "SELECT count(*),sum(CAST(quantity AS DECIMAL(28,8))) FROM {table} WHERE symbol='BTCUSDT' AND CAST(timestamp_ms AS BIGINT) < 1578013200000",
+        "scan": "SELECT symbol,sum(CAST(quote_quantity AS DECIMAL(28,8))),sum(CAST(quantity AS DECIMAL(28,8))) FROM {table} GROUP BY symbol ORDER BY symbol",
+        "id_lookup": "SELECT * FROM {table} WHERE trade_id IN ('210000000','49000000') ORDER BY ALL"
+      },
+      "elapsed_s": 40.622334249987034
+    }
+  },
+  "decisions": [
+    {
+      "profile": "point",
+      "selected": "csv_gzip",
+      "baseline": "csv_gzip",
+      "weights": {
+        "point": 1.0
+      },
+      "query_count": 1,
+      "minimum_savings_fraction": 0.1,
+      "search_overhead_s": 20.668767541006673,
+      "scores": [
+        {
+          "layout": "csv_gzip",
+          "setup_s": 0,
+          "query_s": {
+            "low": 0.19312870799330994,
+            "median": 0.21822162499302067,
+            "high": 0.235422791010933
+          },
+          "total_s": {
+            "low": 0.19312870799330994,
+            "median": 0.21822162499302067,
+            "high": 0.235422791010933
+          }
+        },
+        {
+          "layout": "parquet",
+          "setup_s": 21.496158624999225,
+          "query_s": {
+            "low": 0.013486875017406419,
+            "median": 0.013818666979204863,
+            "high": 0.018320292001590133
+          },
+          "total_s": {
+            "low": 21.50964550001663,
+            "median": 21.50997729197843,
+            "high": 21.514478917000815
+          },
+          "conservative_savings_s": -21.321350209007505,
+          "break_even_queries": 123
+        },
+        {
+          "layout": "partitioned",
+          "setup_s": 21.577826083026594,
+          "query_s": {
+            "low": 0.012898457993287593,
+            "median": 0.013247584021883085,
+            "high": 0.014152707997709513
+          },
+          "total_s": {
+            "low": 21.59072454101988,
+            "median": 21.591073667048477,
+            "high": 21.591978791024303
+          },
+          "conservative_savings_s": -21.398850083030993,
+          "break_even_queries": 121
+        },
+        {
+          "layout": "partitioned_csv",
+          "setup_s": 22.468187124002725,
+          "query_s": {
+            "low": 0.13955108300433494,
+            "median": 0.14012499997625127,
+            "high": 0.1619637919939123
+          },
+          "total_s": {
+            "low": 22.60773820700706,
+            "median": 22.608312123978976,
+            "high": 22.630150915996637
+          },
+          "conservative_savings_s": -22.437022208003327,
+          "break_even_queries": 721
+        }
+      ],
+      "rejected": [
+        {
+          "layout": "parquet",
+          "reason": "insufficient_conservative_savings"
+        },
+        {
+          "layout": "partitioned",
+          "reason": "insufficient_conservative_savings"
+        },
+        {
+          "layout": "partitioned_csv",
+          "reason": "insufficient_conservative_savings"
+        }
+      ],
+      "reason": "retain_baseline",
+      "limitations": [
+        "Observed min/max timing envelope is not a statistical confidence interval.",
+        "Prediction applies to measured data and workload; changes require remeasurement.",
+        "Search overhead is an explicit planning allowance for alternatives; already incurred costs are sunk.",
+        "Seconds saved are not automatically dollars saved."
+      ]
+    },
+    {
+      "profile": "point",
+      "selected": "csv_gzip",
+      "baseline": "csv_gzip",
+      "weights": {
+        "point": 1.0
+      },
+      "query_count": 100,
+      "minimum_savings_fraction": 0.1,
+      "search_overhead_s": 20.668767541006673,
+      "scores": [
+        {
+          "layout": "csv_gzip",
+          "setup_s": 0,
+          "query_s": {
+            "low": 0.19312870799330994,
+            "median": 0.21822162499302067,
+            "high": 0.235422791010933
+          },
+          "total_s": {
+            "low": 19.312870799330994,
+            "median": 21.822162499302067,
+            "high": 23.5422791010933
+          }
+        },
+        {
+          "layout": "parquet",
+          "setup_s": 21.496158624999225,
+          "query_s": {
+            "low": 0.013486875017406419,
+            "median": 0.013818666979204863,
+            "high": 0.018320292001590133
+          },
+          "total_s": {
+            "low": 22.844846126739867,
+            "median": 22.87802532291971,
+            "high": 23.32818782515824
+          },
+          "conservative_savings_s": -4.015317025827244,
+          "break_even_queries": 123
+        },
+        {
+          "layout": "partitioned",
+          "setup_s": 21.577826083026594,
+          "query_s": {
+            "low": 0.012898457993287593,
+            "median": 0.013247584021883085,
+            "high": 0.014152707997709513
+          },
+          "total_s": {
+            "low": 22.867671882355353,
+            "median": 22.902584485214902,
+            "high": 22.993096882797545
+          },
+          "conservative_savings_s": -3.6802260834665503,
+          "break_even_queries": 121
+        },
+        {
+          "layout": "partitioned_csv",
+          "setup_s": 22.468187124002725,
+          "query_s": {
+            "low": 0.13955108300433494,
+            "median": 0.14012499997625127,
+            "high": 0.1619637919939123
+          },
+          "total_s": {
+            "low": 36.42329542443622,
+            "median": 36.48068712162785,
+            "high": 38.664566323393956
+          },
+          "conservative_savings_s": -19.35169552406296,
+          "break_even_queries": 721
+        }
+      ],
+      "rejected": [
+        {
+          "layout": "parquet",
+          "reason": "insufficient_conservative_savings"
+        },
+        {
+          "layout": "partitioned",
+          "reason": "insufficient_conservative_savings"
+        },
+        {
+          "layout": "partitioned_csv",
+          "reason": "insufficient_conservative_savings"
+        }
+      ],
+      "reason": "retain_baseline",
+      "limitations": [
+        "Observed min/max timing envelope is not a statistical confidence interval.",
+        "Prediction applies to measured data and workload; changes require remeasurement.",
+        "Search overhead is an explicit planning allowance for alternatives; already incurred costs are sunk.",
+        "Seconds saved are not automatically dollars saved."
+      ]
+    },
+    {
+      "profile": "point",
+      "selected": "partitioned",
+      "baseline": "csv_gzip",
+      "weights": {
+        "point": 1.0
+      },
+      "query_count": 10000,
+      "minimum_savings_fraction": 0.1,
+      "search_overhead_s": 20.668767541006673,
+      "scores": [
+        {
+          "layout": "csv_gzip",
+          "setup_s": 0,
+          "query_s": {
+            "low": 0.19312870799330994,
+            "median": 0.21822162499302067,
+            "high": 0.235422791010933
+          },
+          "total_s": {
+            "low": 1931.2870799330994,
+            "median": 2182.2162499302067,
+            "high": 2354.22791010933
+          }
+        },
+        {
+          "layout": "parquet",
+          "setup_s": 21.496158624999225,
+          "query_s": {
+            "low": 0.013486875017406419,
+            "median": 0.013818666979204863,
+            "high": 0.018320292001590133
+          },
+          "total_s": {
+            "low": 156.36490879906341,
+            "median": 159.68282841704786,
+            "high": 204.69907864090055
+          },
+          "conservative_savings_s": 1726.588001292199,
+          "break_even_queries": 123
+        },
+        {
+          "layout": "partitioned",
+          "setup_s": 21.577826083026594,
+          "query_s": {
+            "low": 0.012898457993287593,
+            "median": 0.013247584021883085,
+            "high": 0.014152707997709513
+          },
+          "total_s": {
+            "low": 150.56240601590252,
+            "median": 154.05366630185745,
+            "high": 163.10490606012172
+          },
+          "conservative_savings_s": 1768.1821738729777,
+          "break_even_queries": 121
+        },
+        {
+          "layout": "partitioned_csv",
+          "setup_s": 22.468187124002725,
+          "query_s": {
+            "low": 0.13955108300433494,
+            "median": 0.14012499997625127,
+            "high": 0.1619637919939123
+          },
+          "total_s": {
+            "low": 1417.9790171673521,
+            "median": 1423.7181868865155,
+            "high": 1642.1061070631258
+          },
+          "conservative_savings_s": 289.18097286997363,
+          "break_even_queries": 721
+        }
+      ],
+      "rejected": [],
+      "reason": "measured_savings_clear_threshold",
+      "limitations": [
+        "Observed min/max timing envelope is not a statistical confidence interval.",
+        "Prediction applies to measured data and workload; changes require remeasurement.",
+        "Search overhead is an explicit planning allowance for alternatives; already incurred costs are sunk.",
+        "Seconds saved are not automatically dollars saved."
+      ]
+    },
+    {
+      "profile": "scan",
+      "selected": "csv_gzip",
+      "baseline": "csv_gzip",
+      "weights": {
+        "scan": 1.0
+      },
+      "query_count": 1,
+      "minimum_savings_fraction": 0.1,
+      "search_overhead_s": 20.668767541006673,
+      "scores": [
+        {
+          "layout": "csv_gzip",
+          "setup_s": 0,
+          "query_s": {
+            "low": 0.33923595800297335,
+            "median": 0.3521312500233762,
+            "high": 0.3527402500039898
+          },
+          "total_s": {
+            "low": 0.33923595800297335,
+            "median": 0.3521312500233762,
+            "high": 0.3527402500039898
+          }
+        },
+        {
+          "layout": "parquet",
+          "setup_s": 21.496158624999225,
+          "query_s": {
+            "low": 0.16455804198631085,
+            "median": 0.16458725000848062,
+            "high": 0.1887047500058543
+          },
+          "total_s": {
+            "low": 21.660716666985536,
+            "median": 21.660745875007706,
+            "high": 21.68486337500508
+          },
+          "conservative_savings_s": -21.345627417002106,
+          "break_even_queries": 143
+        },
+        {
+          "layout": "partitioned",
+          "setup_s": 21.577826083026594,
+          "query_s": {
+            "low": 0.16370858400478028,
+            "median": 0.16394208298879676,
+            "high": 0.2678386249754112
+          },
+          "total_s": {
+            "low": 21.741534667031374,
+            "median": 21.74176816601539,
+            "high": 21.845664708002005
+          },
+          "conservative_savings_s": -21.50642874999903,
+          "break_even_queries": 303
+        },
+        {
+          "layout": "partitioned_csv",
+          "setup_s": 22.468187124002725,
+          "query_s": {
+            "low": 0.3102736250148155,
+            "median": 0.3138590829912573,
+            "high": 0.3165337909886148
+          },
+          "total_s": {
+            "low": 22.77846074901754,
+            "median": 22.782046206993982,
+            "high": 22.78472091499134
+          },
+          "conservative_savings_s": -22.445484956988366,
+          "break_even_queries": 990
+        }
+      ],
+      "rejected": [
+        {
+          "layout": "parquet",
+          "reason": "insufficient_conservative_savings"
+        },
+        {
+          "layout": "partitioned",
+          "reason": "insufficient_conservative_savings"
+        },
+        {
+          "layout": "partitioned_csv",
+          "reason": "insufficient_conservative_savings"
+        }
+      ],
+      "reason": "retain_baseline",
+      "limitations": [
+        "Observed min/max timing envelope is not a statistical confidence interval.",
+        "Prediction applies to measured data and workload; changes require remeasurement.",
+        "Search overhead is an explicit planning allowance for alternatives; already incurred costs are sunk.",
+        "Seconds saved are not automatically dollars saved."
+      ]
+    },
+    {
+      "profile": "scan",
+      "selected": "csv_gzip",
+      "baseline": "csv_gzip",
+      "weights": {
+        "scan": 1.0
+      },
+      "query_count": 100,
+      "minimum_savings_fraction": 0.1,
+      "search_overhead_s": 20.668767541006673,
+      "scores": [
+        {
+          "layout": "csv_gzip",
+          "setup_s": 0,
+          "query_s": {
+            "low": 0.33923595800297335,
+            "median": 0.3521312500233762,
+            "high": 0.3527402500039898
+          },
+          "total_s": {
+            "low": 33.923595800297335,
+            "median": 35.21312500233762,
+            "high": 35.27402500039898
+          }
+        },
+        {
+          "layout": "parquet",
+          "setup_s": 21.496158624999225,
+          "query_s": {
+            "low": 0.16455804198631085,
+            "median": 0.16458725000848062,
+            "high": 0.1887047500058543
+          },
+          "total_s": {
+            "low": 37.95196282363031,
+            "median": 37.95488362584729,
+            "high": 40.366633625584655
+          },
+          "conservative_savings_s": -6.44303782528732,
+          "break_even_queries": 143
+        },
+        {
+          "layout": "partitioned",
+          "setup_s": 21.577826083026594,
+          "query_s": {
+            "low": 0.16370858400478028,
+            "median": 0.16394208298879676,
+            "high": 0.2678386249754112
+          },
+          "total_s": {
+            "low": 37.94868448350462,
+            "median": 37.97203438190627,
+            "high": 48.361688580567716
+          },
+          "conservative_savings_s": -14.438092780270381,
+          "break_even_queries": 303
+        },
+        {
+          "layout": "partitioned_csv",
+          "setup_s": 22.468187124002725,
+          "query_s": {
+            "low": 0.3102736250148155,
+            "median": 0.3138590829912573,
+            "high": 0.3165337909886148
+          },
+          "total_s": {
+            "low": 53.49554962548427,
+            "median": 53.854095423128456,
+            "high": 54.1215662228642
+          },
+          "conservative_savings_s": -20.19797042256687,
+          "break_even_queries": 990
+        }
+      ],
+      "rejected": [
+        {
+          "layout": "parquet",
+          "reason": "insufficient_conservative_savings"
+        },
+        {
+          "layout": "partitioned",
+          "reason": "insufficient_conservative_savings"
+        },
+        {
+          "layout": "partitioned_csv",
+          "reason": "insufficient_conservative_savings"
+        }
+      ],
+      "reason": "retain_baseline",
+      "limitations": [
+        "Observed min/max timing envelope is not a statistical confidence interval.",
+        "Prediction applies to measured data and workload; changes require remeasurement.",
+        "Search overhead is an explicit planning allowance for alternatives; already incurred costs are sunk.",
+        "Seconds saved are not automatically dollars saved."
+      ]
+    },
+    {
+      "profile": "scan",
+      "selected": "parquet",
+      "baseline": "csv_gzip",
+      "weights": {
+        "scan": 1.0
+      },
+      "query_count": 10000,
+      "minimum_savings_fraction": 0.1,
+      "search_overhead_s": 20.668767541006673,
+      "scores": [
+        {
+          "layout": "csv_gzip",
+          "setup_s": 0,
+          "query_s": {
+            "low": 0.33923595800297335,
+            "median": 0.3521312500233762,
+            "high": 0.3527402500039898
+          },
+          "total_s": {
+            "low": 3392.3595800297335,
+            "median": 3521.312500233762,
+            "high": 3527.402500039898
+          }
+        },
+        {
+          "layout": "parquet",
+          "setup_s": 21.496158624999225,
+          "query_s": {
+            "low": 0.16455804198631085,
+            "median": 0.16458725000848062,
+            "high": 0.1887047500058543
+          },
+          "total_s": {
+            "low": 1667.0765784881078,
+            "median": 1667.3686587098055,
+            "high": 1908.5436586835422
+          },
+          "conservative_savings_s": 1483.8159213461913,
+          "break_even_queries": 143
+        },
+        {
+          "layout": "partitioned",
+          "setup_s": 21.577826083026594,
+          "query_s": {
+            "low": 0.16370858400478028,
+            "median": 0.16394208298879676,
+            "high": 0.2678386249754112
+          },
+          "total_s": {
+            "low": 1658.6636661308294,
+            "median": 1660.9986559709942,
+            "high": 2699.964075837139
+          },
+          "conservative_savings_s": 692.3955041925947,
+          "break_even_queries": 303
+        },
+        {
+          "layout": "partitioned_csv",
+          "setup_s": 22.468187124002725,
+          "query_s": {
+            "low": 0.3102736250148155,
+            "median": 0.3138590829912573,
+            "high": 0.3165337909886148
+          },
+          "total_s": {
+            "low": 3125.2044372721575,
+            "median": 3161.059017036576,
+            "high": 3187.8060970101506
+          },
+          "conservative_savings_s": 204.55348301958293,
+          "break_even_queries": 990
+        }
+      ],
+      "rejected": [
+        {
+          "layout": "partitioned_csv",
+          "reason": "insufficient_conservative_savings"
+        }
+      ],
+      "reason": "measured_savings_clear_threshold",
+      "limitations": [
+        "Observed min/max timing envelope is not a statistical confidence interval.",
+        "Prediction applies to measured data and workload; changes require remeasurement.",
+        "Search overhead is an explicit planning allowance for alternatives; already incurred costs are sunk.",
+        "Seconds saved are not automatically dollars saved."
+      ]
+    },
+    {
+      "profile": "mixed",
+      "selected": "csv_gzip",
+      "baseline": "csv_gzip",
+      "weights": {
+        "point": 0.3333333333333333,
+        "scan": 0.3333333333333333,
+        "id_lookup": 0.3333333333333333
+      },
+      "query_count": 1,
+      "minimum_savings_fraction": 0.1,
+      "search_overhead_s": 20.668767541006673,
+      "scores": [
+        {
+          "layout": "csv_gzip",
+          "setup_s": 0,
+          "query_s": {
+            "low": 0.24548587499884889,
+            "median": 0.2598431526663868,
+            "high": 0.2665895553460965
+          },
+          "total_s": {
+            "low": 0.24548587499884889,
+            "median": 0.2598431526663868,
+            "high": 0.2665895553460965
+          }
+        },
+        {
+          "layout": "parquet",
+          "setup_s": 21.496158624999225,
+          "query_s": {
+            "low": 0.06372008333952786,
+            "median": 0.0639119306676245,
+            "high": 0.07351255567239907
+          },
+          "total_s": {
+            "low": 21.559878708338754,
+            "median": 21.56007055566685,
+            "high": 21.569671180671623
+          },
+          "conservative_savings_s": -21.324185305672774,
+          "break_even_queries": 125
+        },
+        {
+          "layout": "partitioned",
+          "setup_s": 21.577826083026594,
+          "query_s": {
+            "low": 0.05941763900530835,
+            "median": 0.059673333336832,
+            "high": 0.09549876365538996
+          },
+          "total_s": {
+            "low": 21.6372437220319,
+            "median": 21.637499416363426,
+            "high": 21.673324846681982
+          },
+          "conservative_savings_s": -21.427838971683133,
+          "break_even_queries": 144
+        },
+        {
+          "layout": "partitioned_csv",
+          "setup_s": 22.468187124002725,
+          "query_s": {
+            "low": 0.21005533300922252,
+            "median": 0.21163693032576703,
+            "high": 0.2206677916595557
+          },
+          "total_s": {
+            "low": 22.678242457011947,
+            "median": 22.679824054328492,
+            "high": 22.68885491566228
+          },
+          "conservative_savings_s": -22.44336904066343,
+          "break_even_queries": 906
+        }
+      ],
+      "rejected": [
+        {
+          "layout": "parquet",
+          "reason": "insufficient_conservative_savings"
+        },
+        {
+          "layout": "partitioned",
+          "reason": "insufficient_conservative_savings"
+        },
+        {
+          "layout": "partitioned_csv",
+          "reason": "insufficient_conservative_savings"
+        }
+      ],
+      "reason": "retain_baseline",
+      "limitations": [
+        "Observed min/max timing envelope is not a statistical confidence interval.",
+        "Prediction applies to measured data and workload; changes require remeasurement.",
+        "Search overhead is an explicit planning allowance for alternatives; already incurred costs are sunk.",
+        "Seconds saved are not automatically dollars saved."
+      ]
+    },
+    {
+      "profile": "mixed",
+      "selected": "csv_gzip",
+      "baseline": "csv_gzip",
+      "weights": {
+        "point": 0.3333333333333333,
+        "scan": 0.3333333333333333,
+        "id_lookup": 0.3333333333333333
+      },
+      "query_count": 100,
+      "minimum_savings_fraction": 0.1,
+      "search_overhead_s": 20.668767541006673,
+      "scores": [
+        {
+          "layout": "csv_gzip",
+          "setup_s": 0,
+          "query_s": {
+            "low": 0.24548587499884889,
+            "median": 0.2598431526663868,
+            "high": 0.2665895553460965
+          },
+          "total_s": {
+            "low": 24.54858749988489,
+            "median": 25.98431526663868,
+            "high": 26.658955534609653
+          }
+        },
+        {
+          "layout": "parquet",
+          "setup_s": 21.496158624999225,
+          "query_s": {
+            "low": 0.06372008333952786,
+            "median": 0.0639119306676245,
+            "high": 0.07351255567239907
+          },
+          "total_s": {
+            "low": 27.86816695895201,
+            "median": 27.887351691761676,
+            "high": 28.847414192239132
+          },
+          "conservative_savings_s": -4.298826692354243,
+          "break_even_queries": 125
+        },
+        {
+          "layout": "partitioned",
+          "setup_s": 21.577826083026594,
+          "query_s": {
+            "low": 0.05941763900530835,
+            "median": 0.059673333336832,
+            "high": 0.09549876365538996
+          },
+          "total_s": {
+            "low": 27.51958998355743,
+            "median": 27.545159416709794,
+            "high": 31.12770244856559
+          },
+          "conservative_savings_s": -6.579114948680701,
+          "break_even_queries": 144
+        },
+        {
+          "layout": "partitioned_csv",
+          "setup_s": 22.468187124002725,
+          "query_s": {
+            "low": 0.21005533300922252,
+            "median": 0.21163693032576703,
+            "high": 0.2206677916595557
+          },
+          "total_s": {
+            "low": 43.47372042492498,
+            "median": 43.63188015657943,
+            "high": 44.53496628995829
+          },
+          "conservative_savings_s": -19.986378790073402,
+          "break_even_queries": 906
+        }
+      ],
+      "rejected": [
+        {
+          "layout": "parquet",
+          "reason": "insufficient_conservative_savings"
+        },
+        {
+          "layout": "partitioned",
+          "reason": "insufficient_conservative_savings"
+        },
+        {
+          "layout": "partitioned_csv",
+          "reason": "insufficient_conservative_savings"
+        }
+      ],
+      "reason": "retain_baseline",
+      "limitations": [
+        "Observed min/max timing envelope is not a statistical confidence interval.",
+        "Prediction applies to measured data and workload; changes require remeasurement.",
+        "Search overhead is an explicit planning allowance for alternatives; already incurred costs are sunk.",
+        "Seconds saved are not automatically dollars saved."
+      ]
+    },
+    {
+      "profile": "mixed",
+      "selected": "parquet",
+      "baseline": "csv_gzip",
+      "weights": {
+        "point": 0.3333333333333333,
+        "scan": 0.3333333333333333,
+        "id_lookup": 0.3333333333333333
+      },
+      "query_count": 10000,
+      "minimum_savings_fraction": 0.1,
+      "search_overhead_s": 20.668767541006673,
+      "scores": [
+        {
+          "layout": "csv_gzip",
+          "setup_s": 0,
+          "query_s": {
+            "low": 0.24548587499884889,
+            "median": 0.2598431526663868,
+            "high": 0.2665895553460965
+          },
+          "total_s": {
+            "low": 2454.858749988489,
+            "median": 2598.431526663868,
+            "high": 2665.8955534609654
+          }
+        },
+        {
+          "layout": "parquet",
+          "setup_s": 21.496158624999225,
+          "query_s": {
+            "low": 0.06372008333952786,
+            "median": 0.0639119306676245,
+            "high": 0.07351255567239907
+          },
+          "total_s": {
+            "low": 658.6969920202779,
+            "median": 660.6154653012443,
+            "high": 756.6217153489899
+          },
+          "conservative_savings_s": 1698.237034639499,
+          "break_even_queries": 125
+        },
+        {
+          "layout": "partitioned",
+          "setup_s": 21.577826083026594,
+          "query_s": {
+            "low": 0.05941763900530835,
+            "median": 0.059673333336832,
+            "high": 0.09549876365538996
+          },
+          "total_s": {
+            "low": 615.7542161361101,
+            "median": 618.3111594513466,
+            "high": 976.5654626369262
+          },
+          "conservative_savings_s": 1478.2932873515626,
+          "break_even_queries": 144
+        },
+        {
+          "layout": "partitioned_csv",
+          "setup_s": 22.468187124002725,
+          "query_s": {
+            "low": 0.21005533300922252,
+            "median": 0.21163693032576703,
+            "high": 0.2206677916595557
+          },
+          "total_s": {
+            "low": 2123.021517216228,
+            "median": 2138.837490381673,
+            "high": 2229.1461037195595
+          },
+          "conservative_savings_s": 225.71264626892935,
+          "break_even_queries": 906
+        }
+      ],
+      "rejected": [
+        {
+          "layout": "partitioned_csv",
+          "reason": "insufficient_conservative_savings"
+        }
+      ],
+      "reason": "measured_savings_clear_threshold",
+      "limitations": [
+        "Observed min/max timing envelope is not a statistical confidence interval.",
+        "Prediction applies to measured data and workload; changes require remeasurement.",
+        "Search overhead is an explicit planning allowance for alternatives; already incurred costs are sunk.",
+        "Seconds saved are not automatically dollars saved."
+      ]
+    }
+  ],
+  "evaluations": [
+    {
+      "profile": "point",
+      "query_count": 1,
+      "selected": "csv_gzip",
+      "holdout_total_s": {
+        "csv_gzip": 0.4114082499872893,
+        "parquet": 21.604820623993874,
+        "partitioned": 21.753628873993875,
+        "partitioned_csv": 23.991011625010287
+      },
+      "holdout_best": "csv_gzip",
+      "regret_s": 0.0,
+      "speedup_vs_keep_csv": 1.0,
+      "speedup_vs_always_parquet": 52.51431060184468
+    },
+    {
+      "profile": "point",
+      "query_count": 100,
+      "selected": "csv_gzip",
+      "holdout_total_s": {
+        "csv_gzip": 41.14082499872893,
+        "parquet": 25.61627587187104,
+        "partitioned": 25.48760771623347,
+        "partitioned_csv": 51.87426678382326
+      },
+      "holdout_best": "partitioned",
+      "regret_s": 15.653217282495461,
+      "speedup_vs_keep_csv": 1.0,
+      "speedup_vs_always_parquet": 0.6226485704324711
+    },
+    {
+      "profile": "point",
+      "query_count": 10000,
+      "selected": "partitioned",
+      "holdout_total_s": {
+        "csv_gzip": 4114.082499872893,
+        "parquet": 426.7618006595876,
+        "partitioned": 398.8854919401929,
+        "partitioned_csv": 2840.1997826651204
+      },
+      "holdout_best": "partitioned",
+      "regret_s": 0.0,
+      "speedup_vs_keep_csv": 10.313943683090235,
+      "speedup_vs_always_parquet": 1.0698854916577774
+    },
+    {
+      "profile": "scan",
+      "query_count": 1,
+      "selected": "csv_gzip",
+      "holdout_total_s": {
+        "csv_gzip": 0.9986754170095082,
+        "parquet": 21.99913349901908,
+        "partitioned": 22.2314141249808,
+        "partitioned_csv": 24.57061999902362
+      },
+      "holdout_best": "csv_gzip",
+      "regret_s": 0.0,
+      "speedup_vs_keep_csv": 1.0,
+      "speedup_vs_always_parquet": 22.02831182617328
+    },
+    {
+      "profile": "scan",
+      "query_count": 100,
+      "selected": "csv_gzip",
+      "holdout_total_s": {
+        "csv_gzip": 99.86754170095082,
+        "parquet": 65.04756337439176,
+        "partitioned": 73.2661328149261,
+        "partitioned_csv": 109.83510418515652
+      },
+      "holdout_best": "parquet",
+      "regret_s": 34.81997832655907,
+      "speedup_vs_keep_csv": 1.0,
+      "speedup_vs_always_parquet": 0.6513383854903925
+    },
+    {
+      "profile": "scan",
+      "query_count": 10000,
+      "selected": "parquet",
+      "holdout_total_s": {
+        "csv_gzip": 9986.754170095082,
+        "parquet": 4369.890550911659,
+        "partitioned": 5176.738001809455,
+        "partitioned_csv": 8636.283522798447
+      },
+      "holdout_best": "parquet",
+      "regret_s": 0.0,
+      "speedup_vs_keep_csv": 2.285355675100745,
+      "speedup_vs_always_parquet": 1.0
+    },
+    {
+      "profile": "mixed",
+      "query_count": 1,
+      "selected": "csv_gzip",
+      "holdout_total_s": {
+        "csv_gzip": 0.6039426529993458,
+        "parquet": 21.72813579067588,
+        "partitioned": 21.90088601332779,
+        "partitioned_csv": 24.21956177733955
+      },
+      "holdout_best": "csv_gzip",
+      "regret_s": 0.0,
+      "speedup_vs_keep_csv": 1.0,
+      "speedup_vs_always_parquet": 35.977150616483144
+    },
+    {
+      "profile": "mixed",
+      "query_count": 100,
+      "selected": "csv_gzip",
+      "holdout_total_s": {
+        "csv_gzip": 60.39426529993458,
+        "parquet": 37.94779254007153,
+        "partitioned": 40.21332164962465,
+        "partitioned_csv": 74.7292820167495
+      },
+      "holdout_best": "parquet",
+      "regret_s": 22.44647275986305,
+      "speedup_vs_keep_csv": 1.0,
+      "speedup_vs_always_parquet": 0.6283343683644851
+    },
+    {
+      "profile": "mixed",
+      "query_count": 10000,
+      "selected": "parquet",
+      "holdout_total_s": {
+        "csv_gzip": 6039.426529993458,
+        "parquet": 1659.913467479637,
+        "partitioned": 1871.4568852793113,
+        "partitioned_csv": 5125.701305957744
+      },
+      "holdout_best": "parquet",
+      "regret_s": 0.0,
+      "speedup_vs_keep_csv": 3.63839841552918,
+      "speedup_vs_always_parquet": 1.0
+    }
+  ],
+  "corruption_control": {
+    "verified": false,
+    "reason": "record_mismatch",
+    "differing_rows": 1
+  },
+  "environment": {
+    "duckdb": "1.5.5",
+    "threads": 1,
+    "memory_limit": "1GB"
+  },
+  "limitations": [
+    "Temporal holdout within the same previously downloaded six-file corpus, not a new provider or prospective production data.",
+    "Three timed repeats after warmup; empirical timing ranges are not confidence intervals.",
+    "Point workload keeps its template but changes date; ID lookup is a negative lookup workload.",
+    "Calibration search cost charged to each alternative, separate from deployment conversion. Holdout validation cost excluded.",
+    "Conversion measured once; query-count totals are projections, not full workload executions.",
+    "Local DuckDB with warm caches; no AWS billing, cold-cache, concurrent-load or large-scale claims."
+  ]
+}

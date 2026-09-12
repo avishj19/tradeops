@@ -146,3 +146,32 @@ def experiment_cost(body: CostScenario):
     path=ROOT/'benchmarks'/'latest.json'
     if not path.exists():raise HTTPException(404,'Run the benchmark first.')
     return estimate_costs(json.loads(path.read_text()),body)
+
+from .layout_policy import recommend, check_measurement_scope
+from pydantic import Field, ConfigDict
+
+class LayoutRecommendation(BaseModel):
+    model_config = ConfigDict(allow_inf_nan=False, extra='forbid')
+    query_count: int = Field(default=100, ge=0, le=100000000, strict=True)
+    storage_budget_bytes: int = Field(default=200*1024*1024, ge=0, strict=True)
+    workload_weights: dict[str, float] = Field(default_factory=lambda: {'selective': 1.0})
+    minimum_savings_fraction: float = Field(default=.1, ge=0, lt=1)
+    search_overhead_s: float = Field(default=0, ge=0)
+    target_rows: int | None = Field(default=None, gt=0, strict=True)
+
+@app.post('/api/experiments/recommend')
+def layout_recommendation(body: LayoutRecommendation):
+    path=ROOT/'benchmarks'/'latest.json'
+    if not path.exists():raise HTTPException(404,'Run the benchmark first.')
+    report=json.loads(path.read_text())
+    scope_check=check_measurement_scope(report['rows'],body.target_rows) if body.target_rows is not None else None
+    if scope_check and scope_check['remeasurement_required']:
+        raise HTTPException(409,dict(reason='remeasurement_required',**scope_check))
+    candidates=[dict(c, samples=report['measurements']['calibration'][c['layout']]) for c in report['candidates']]
+    try:
+        result=recommend(candidates, body.workload_weights, body.query_count, body.storage_budget_bytes,
+                         minimum_savings_fraction=body.minimum_savings_fraction, search_overhead_s=body.search_overhead_s)
+    except ValueError as exc:
+        raise HTTPException(422,str(exc)) from exc
+    return dict(**result, measured_at=report['created'], data_rows=report['rows'], scope_check=scope_check,
+                scope='Existing benchmark dataset only. No cloud changes or automatic execution.')

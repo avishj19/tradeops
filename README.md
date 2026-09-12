@@ -380,3 +380,33 @@ savings. See https://aws.amazon.com/athena/pricing/ and https://aws.amazon.com/s
 for current region/service pricing. Request charges, transfers, billing minimums,
 network services, labor, and other services are not calculated. Measured Athena scan
 bytes and actual infrastructure charges are needed for a defensible AWS total.
+
+## Conservative workload policy and temporal validation
+
+The new backend policy (`backend/layout_policy.py`) strengthens the experiment optimizer without changing the demo screens or claiming a trained AI model. It is deterministic: select among measured layouts, reject unsafe candidates, and explain the decision.
+
+- `POST /api/experiments/recommend` accepts `query_count`, `workload_weights` (existing benchmark query names), `storage_budget_bytes`, `minimum_savings_fraction` (default 0.10), `search_overhead_s`, and optional `target_rows`.
+- It requires at least three timing samples for every requested query, normalizes positive workload weights, and compares an alternative's observed slow end against the baseline's observed fast end. It retains the original layout unless the savings clear the threshold after conversion and the supplied search-cost allowance. These observed ranges are **not statistical confidence intervals**.
+- Results include scored alternatives, excluded candidates and reasons, empirical break-even query counts, and measurement scope. It makes no file or cloud changes.
+- Supply `target_rows` when applying measurements to another dataset. A row-count change exceeding 20% returns HTTP 409 requiring remeasurement. The 20% threshold is an explicit engineering guardrail, not a learned or scientifically calibrated threshold. Similar row counts do not establish similar distributions, hardware, schema, or performance. Omitted `target_rows` means only the existing measured corpus is being evaluated.
+- `search_overhead_s=0` treats existing benchmark/search costs as sunk. Supply an allowance when planning a new optimization. This policy minimizes seconds; the separate `/api/experiments/cost` scenario models dollars. The old experiment report and cost calculator retain their original median-based methodology; they do not silently become conservative policy results.
+- Shared verification checks schema plus bidirectional `EXCEPT ALL`, preserving duplicates. Tests deliberately remove a duplicate, alter values, and change types; every corrupted result must be rejected.
+
+Example for the existing measured dataset:
+
+```bash
+curl -s http://127.0.0.1:8000/api/experiments/recommend \
+  -H 'Content-Type: application/json' \
+  -d '{"query_count":10000,"workload_weights":{"selective":0.7,"daily_volume":0.3},"minimum_savings_fraction":0.1,"search_overhead_s":30}'
+```
+
+Run the offline temporal validation after populating the original benchmark cache:
+
+```bash
+python -m scripts.validate_layout_policy
+python -m pytest -q
+```
+
+This reconstructs data from publisher-checksum-verified archives, calibrates on January 1, 2020, **freezes recommendations before measuring January 3**, and compares combined gzip, single Parquet, symbol-partitioned Parquet, and symbol-partitioned gzip. It tests selective, full-scan, and mixed workloads at 1, 100, and 10,000 projected queries. It also removes a record to exercise rejection. Outputs: `benchmarks/policy-validation.json` and [policy validation findings](benchmarks/POLICY_VALIDATION.md). It leaves `benchmarks/latest.json` intact.
+
+These dates come from the existing downloaded corpus; this is a temporal split, not newly acquired external data. Timing repeats use warm local DuckDB caches. Query-count totals are projections. The report records losses as well as wins and does not claim production AWS savings. No new external dependencies, customer claims, or LLM integration were added.
