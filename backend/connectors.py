@@ -107,7 +107,7 @@ class Runner:
             table=pa.Table.from_pylist([{'source_record':json.dumps(r,sort_keys=True,separators=(',',':'))} for r in rows])
             out=folder/'optimized';out.mkdir(exist_ok=True);path=out/'logs.parquet'
             pq.write_table(table,path,compression='zstd')
-            if pq.read_table(path).to_pylist()!=table.to_pylist():raise ValueError('Parquet verification failed')
+            if not pq.read_table(path).equals(table):raise ValueError('Parquet verification failed')
             size=path.stat().st_size
             result=dict(kind='external_logs',rows=len(rows),before_bytes=len(data),after_bytes=size,reduction_pct=round(100*(1-size/len(data)),1),approval='not_required',incidents=[],events=[],message='Original records preserved. No operational fields inferred. Add field mapping to enable latency/error analysis.')
         (folder/'raw.source').write_bytes(data)

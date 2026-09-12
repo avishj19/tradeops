@@ -16,7 +16,8 @@ class SequenceEvidenceAgent:
         seen = set()
         duplicates = 0
         for row in rows:
-            fingerprint = json.dumps(row, sort_keys=True)
+            # Tuple fingerprint matches exact-row equality without json.dumps cost.
+            fingerprint = tuple(sorted(row.items()))
             if fingerprint in seen:
                 duplicates += 1
                 continue
@@ -25,14 +26,18 @@ class SequenceEvidenceAgent:
         findings, skipped = [], Counter()
         tested = comparisons = candidate_count = 0
         for key, records in sorted(cohorts.items()):
-            records = sorted(records, key=lambda r: datetime.fromisoformat(r['timestamp']))
-            times = [datetime.fromisoformat(r['timestamp']) for r in records]
+            # Parse each timestamp once; reuse for sort, tie detection, and gap checks.
+            timed = [(datetime.fromisoformat(r['timestamp']), r) for r in records]
+            timed.sort(key=lambda item: item[0])
+            times = [t for t, _ in timed]
+            records = [r for _, r in timed]
             # No arbitrary ordering of simultaneous events or bridging excluded rows.
-            if len(set(times)) != len(times):
+            if any(times[i] == times[i + 1] for i in range(len(times) - 1)):
                 skipped['ambiguous_timestamp_order'] += 1
                 continue
             split = int(len(records) * .7)
             reference, observed = records[:split], records[split:]
+            reference_times, observed_times = times[:split], times[split:]
             if len(reference) < 31 or len(observed) < 31:
                 skipped['insufficient_records'] += 1
                 continue
@@ -47,11 +52,12 @@ class SequenceEvidenceAgent:
                     return None
                 return status + ('/slow' if float(row['latency_ms']) > threshold else '/normal')
 
-            def count(part):
+            def count(part, part_times):
                 counts, examples = Counter(), {}
-                for left, right in zip(part, part[1:]):
+                for i in range(len(part) - 1):
+                    left, right = part[i], part[i + 1]
                     a, b = token(left), token(right)
-                    gap = (datetime.fromisoformat(right['timestamp'])-datetime.fromisoformat(left['timestamp'])).total_seconds()
+                    gap = (part_times[i + 1] - part_times[i]).total_seconds()
                     if a is None or b is None or gap > 300:
                         continue
                     motif = (a, b)
@@ -59,8 +65,8 @@ class SequenceEvidenceAgent:
                     examples.setdefault(motif, [str(left['event_id']), str(right['event_id'])])
                 return counts, examples
 
-            before, _ = count(reference)
-            after, examples = count(observed)
+            before, _ = count(reference, reference_times)
+            after, examples = count(observed, observed_times)
             n, m = sum(before.values()), sum(after.values())
             if min(n, m) < 30:
                 skipped['insufficient_eligible_transitions'] += 1
@@ -82,9 +88,9 @@ class SequenceEvidenceAgent:
                     status='candidate_requires_validation',
                     next_action='Compare an independent time window and inspect deployments, traffic mix and correlated request traces. Do not suppress or delete records on this evidence.')
                 findings.append(finding)
-                # Bound report size while retaining strongest observed effects.
-                findings.sort(key=lambda f: -f['increase_percentage_points'])
-                del findings[50:]
+        # Bound report size once while retaining strongest observed effects.
+        findings.sort(key=lambda f: -f['increase_percentage_points'])
+        del findings[50:]
         return dict(version=1, status='candidates_found' if candidate_count else 'no_candidates' if tested else 'insufficient_evidence',
             method='chronological_reference_bigram_comparison', tested_cohorts=tested,
             skipped_cohorts=dict(skipped), tested_motifs=comparisons, candidate_count=candidate_count,
