@@ -17,7 +17,7 @@ TradeOps is a local operations dashboard for small, specialized financial busine
 Use Python 3.11+ on macOS/Linux. The full suite was tested with Python 3.14. The connector CLI uses Unix file locking and is not Windows-native. The frontend uses plain JavaScript and CSS; no Node installation or frontend build is needed to run it.
 
 ```sh
-git clone <your-repository-url>
+git clone https://github.com/avishj19/tradeops.git
 cd tradeops
 python3 -m venv .venv
 source .venv/bin/activate
