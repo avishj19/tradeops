@@ -6,6 +6,7 @@ from .planning import incidents
 from .sequences import SequenceEvidenceAgent
 from .instruments import INSTRUMENTS, infer_asset_class, normalize_asset_class
 from .fastpath import dedupe_and_profile
+from .ingest import parse_log_records
 import pyarrow as pa
 import pyarrow.parquet as pq
 
@@ -43,20 +44,21 @@ def generate(scenario='normal', count=10000):
 class LogAnalysisAgent:
     def run(self, data, filename):
         try:
-            text=data.decode('utf-8-sig')
-            rows=list(csv.DictReader(io.StringIO(text))) if filename.lower().endswith('.csv') else json.loads(text)
-            if not isinstance(rows,list) or not rows or len(rows)>200000: raise ValueError('Provide 1–200,000 log records.')
+            rows=parse_log_records(data, filename)
             canonical=[]
-            columns=set(rows[0]) if isinstance(rows[0],dict) else set()
-            has_asset_class='asset_class' in columns
+            columns=set(rows[0])
+            has_asset_class='asset_class' in columns or 'assetClass' in columns
             for r in rows:
-                if not isinstance(r,dict) or not REQUIRED.issubset(r): raise ValueError('Required columns: '+', '.join(sorted(REQUIRED)))
-                if set(r)!=columns or any(k is None or v is None or isinstance(v,(list,dict)) for k,v in r.items()):
-                    raise ValueError('Records must have consistent columns and non-null scalar values.')
+                if set(r)!=columns:
+                    raise ValueError('Records must have consistent columns.')
+                if not REQUIRED.issubset(r): raise ValueError('Required columns: '+', '.join(sorted(REQUIRED))+' (aliases like latency, id, time, ticker are accepted).')
+                # Reject nested/null required values.
+                if any(r.get(k) is None or isinstance(r.get(k),(list,dict)) for k in REQUIRED):
+                    raise ValueError('Required fields must be non-null scalars.')
                 if any(not str(r[k]).strip() for k in REQUIRED):
                     raise ValueError('Required fields cannot be empty.')
                 ts=r['timestamp']
-                if isinstance(ts,(int,float)) or (isinstance(ts,str) and ts.isdigit()):
+                if isinstance(ts,(int,float)) or (isinstance(ts,str) and str(ts).isdigit()):
                     n=int(ts);unit=1000000 if n>=100000000000000 else (1000 if n>=100000000000 else 1)
                     t=datetime.fromtimestamp(n/unit,tz=timezone.utc)
                 else:
@@ -65,21 +67,23 @@ class LogAnalysisAgent:
                 if t.tzinfo is None: raise ValueError('Timestamps must include a timezone.')
                 latency=float(r['latency_ms'])
                 if not math.isfinite(latency) or latency<0: raise ValueError('Latency must be finite and non-negative.')
-                item={str(k):str(v) for k,v in r.items()}
+                item={str(k):str(v) for k,v in r.items() if v is not None and not isinstance(v,(list,dict))}
                 item.update(timestamp=t.astimezone(timezone.utc).isoformat(),latency_ms=latency)
                 # Embed or infer asset class so equities/commodities/options/crypto stay labeled.
-                if has_asset_class:
-                    item['asset_class']=normalize_asset_class(r['asset_class'])
+                if has_asset_class and (r.get('asset_class') is not None or r.get('assetClass') is not None):
+                    item['asset_class']=normalize_asset_class(r.get('asset_class', r.get('assetClass')))
                 else:
                     item['asset_class']=infer_asset_class(item['symbol'])
                 canonical.append(item)
-        except (UnicodeError, json.JSONDecodeError, TypeError, OverflowError) as e:
+        except (UnicodeError, TypeError, OverflowError) as e:
             raise ValueError('Invalid CSV/JSON log data.') from e
         except ValueError:
             raise
         # Exact normalized row duplicates only: repeated event IDs with different data survive.
         # Polars (Rust) fast path when available; pure-Python fallback otherwise.
         clean, profile = dedupe_and_profile(canonical)
+        # Always include sample list so the UI can render anomaly tables safely.
+        profile.setdefault('sample', [])
         return clean, dict(rows=len(rows), duplicates=len(rows)-profile['unique_rows'], **profile)
 
 class CompressionAgent:
