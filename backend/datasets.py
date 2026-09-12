@@ -123,7 +123,11 @@ def parse_market(data,name,source,symbol='',timezone_name='Etc/GMT+5'):
     elif source=='singlestore':
         reader,delim=sniff_reader(text)
         required={'stock_symbol','shares','share_price','trade_time'}
-        if not reader.fieldnames or not required.issubset(reader.fieldnames):raise ValueError(f'Expected SingleStore trade columns stock_symbol, shares, share_price, trade_time (detected delimiter {delim!r}); found: '+', '.join(reader.fieldnames or []))
+        names=['id','stock_symbol','shares','share_price','trade_time']
+        if reader.fieldnames and len(reader.fieldnames)==5 and reader.fieldnames[0].strip().isdigit():
+            # Real S3 sample ships without a header row: id, symbol, shares, price, timestamp.
+            reader=csv.DictReader(io.StringIO(text),fieldnames=names,delimiter=delim)
+        if not reader.fieldnames or not required.issubset(reader.fieldnames):raise ValueError(f'Expected SingleStore trade columns stock_symbol, shares, share_price, trade_time, or 5 headerless columns (detected delimiter {delim!r}); found: '+', '.join(reader.fieldnames or []))
         rows=[]
         for r in reader:
             if None in r or any(v is None for v in r.values()):raise ValueError('Malformed delimited row.')

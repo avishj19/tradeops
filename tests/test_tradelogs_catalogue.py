@@ -53,3 +53,7 @@ def test_symbol_derived_from_aggtrades_filename(tmp_path):
     r=Runner({'type':'folder','path':str(tmp_path),'pattern':'*.zip','dataset':'binance_agg','settle_seconds':0},tmp_path/'d')
     (tmp_path/'ETHUSDT-aggTrades-2026-09-11.zip').write_bytes(z('a.csv','1,3000,1,1,1,%d,True,True\n'%T))
     assert r.folder()==1 and r.failures==[]
+
+def test_singlestore_real_file_has_no_header():
+    rows=parse_market(b'5296438\tARGS\t400.0000\t96.6275\t2022-08-12 02:20:46.000000\n5296439\tXYZ\t10\t1.5\t2022-08-12 02:20:47.000000\n','trade.csv','singlestore')
+    assert len(rows)==2 and rows[0]['symbol']=='ARGS' and rows[0]['quantity']=='400.0000' and rows[0]['timestamp']=='2022-08-12T02:20:46+00:00'
