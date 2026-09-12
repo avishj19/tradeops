@@ -4,6 +4,8 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from .planning import incidents
 from .sequences import SequenceEvidenceAgent
+from .instruments import INSTRUMENTS, infer_asset_class, normalize_asset_class
+from .fastpath import dedupe_and_profile
 import pyarrow as pa
 import pyarrow.parquet as pq
 
@@ -11,12 +13,30 @@ NAMES = ['Supervisor', 'Log Analysis', 'Storage Optimization', 'Compression', 'Q
 REQUIRED = {'timestamp', 'event_id', 'symbol', 'latency_ms', 'status'}
 
 def generate(scenario='normal', count=10000):
+    """Synthetic multi-asset execution logs: equities, commodities, options, crypto."""
     rng = random.Random(42)
     base = datetime.now(timezone.utc).replace(hour=9, minute=30, second=0, microsecond=0)-timedelta(days=95)
     rows=[]
     for i in range(count):
         incident = scenario=='latency_spike' and i > count*.8
-        rows.append(dict(timestamp=(base+timedelta(seconds=i*10)).isoformat(), event_id=f'EX-{i:08}', symbol=rng.choice(['AAPL','MSFT','NVDA','SPY']), latency_ms=round(rng.uniform(400,1200) if incident else rng.uniform(3,45),2), status='ERROR' if incident and i%3==0 else 'FILLED', quantity=rng.randint(1,500), price=round(rng.uniform(100,800),2), source='execution-gateway', strategy=rng.choice(['momentum','market-making'])))
+        asset_class, symbol, lo, hi = INSTRUMENTS[i % len(INSTRUMENTS)]
+        # Rotate strategies slightly by asset class so sequence cohorts stay meaningful.
+        strategy = {'equity':'momentum','commodity':'roll-carry','option':'vol-surface','crypto':'market-making'}[asset_class]
+        if rng.random() < .25:
+            strategy = rng.choice(['momentum','market-making','roll-carry','vol-surface'])
+        qty = rng.randint(1, 20) if asset_class == 'option' else rng.randint(1, 500)
+        rows.append(dict(
+            timestamp=(base+timedelta(seconds=i*10)).isoformat(),
+            event_id=f'EX-{i:08}',
+            asset_class=asset_class,
+            symbol=symbol,
+            latency_ms=round(rng.uniform(400,1200) if incident else rng.uniform(3,45),2),
+            status='ERROR' if incident and i%3==0 else 'FILLED',
+            quantity=qty,
+            price=round(rng.uniform(float(lo), float(hi)), 6 if asset_class == 'crypto' else 2),
+            source='execution-gateway',
+            strategy=strategy,
+        ))
     rows += rows[:int(count*(.15 if scenario=='duplicates' else .04))]
     return rows
 
@@ -28,6 +48,7 @@ class LogAnalysisAgent:
             if not isinstance(rows,list) or not rows or len(rows)>200000: raise ValueError('Provide 1–200,000 log records.')
             canonical=[]
             columns=set(rows[0]) if isinstance(rows[0],dict) else set()
+            has_asset_class='asset_class' in columns
             for r in rows:
                 if not isinstance(r,dict) or not REQUIRED.issubset(r): raise ValueError('Required columns: '+', '.join(sorted(REQUIRED)))
                 if set(r)!=columns or any(k is None or v is None or isinstance(v,(list,dict)) for k,v in r.items()):
@@ -46,23 +67,20 @@ class LogAnalysisAgent:
                 if not math.isfinite(latency) or latency<0: raise ValueError('Latency must be finite and non-negative.')
                 item={str(k):str(v) for k,v in r.items()}
                 item.update(timestamp=t.astimezone(timezone.utc).isoformat(),latency_ms=latency)
+                # Embed or infer asset class so equities/commodities/options/crypto stay labeled.
+                if has_asset_class:
+                    item['asset_class']=normalize_asset_class(r['asset_class'])
+                else:
+                    item['asset_class']=infer_asset_class(item['symbol'])
                 canonical.append(item)
         except (UnicodeError, json.JSONDecodeError, TypeError, OverflowError) as e:
             raise ValueError('Invalid CSV/JSON log data.') from e
+        except ValueError:
+            raise
         # Exact normalized row duplicates only: repeated event IDs with different data survive.
-        # Tuple fingerprints avoid json.dumps on every row while preserving exact-match semantics.
-        unique={tuple(sorted(r.items())):r for r in canonical}
-        clean=list(unique.values())
-        values=[]; symbols=set(); oldest=newest=None
-        for r in clean:
-            values.append(r['latency_ms']); symbols.add(r['symbol']); ts=r['timestamp']
-            if oldest is None or ts<oldest: oldest=ts
-            if newest is None or ts>newest: newest=ts
-        median=statistics.median(values); mad=statistics.median(abs(v-median) for v in values)
-        threshold=max(100,median+6*max(mad,1))
-        abnormal=[r for r in clean if r['latency_ms']>threshold or r['status'].upper() in ['ERROR','REJECTED']]
-        ranked=sorted(values)
-        return clean,dict(rows=len(rows),unique_rows=len(clean),duplicates=len(rows)-len(clean),anomalies=len(abnormal),threshold_ms=round(threshold,2),p95_ms=ranked[min(len(ranked)-1,math.ceil(len(ranked)*.95)-1)],symbols=sorted(symbols),oldest=oldest,newest=newest,sample=abnormal[:8])
+        # Polars (Rust) fast path when available; pure-Python fallback otherwise.
+        clean, profile = dedupe_and_profile(canonical)
+        return clean, dict(rows=len(rows), duplicates=len(rows)-profile['unique_rows'], **profile)
 
 class CompressionAgent:
     def run(self,rows,destination):
@@ -76,7 +94,7 @@ class CompressionAgent:
 
 class QueryOptimizationAgent:
     def run(self,analysis,size):
-        return dict(partitions=['date'], recommendation='Partition production datasets by UTC date. Add symbol only when partition sizes justify it. Compact to 128–512 MiB files; this small demo stays in one file.', sql="SELECT symbol, count(*) AS executions, avg(latency_ms) AS latency_ms\nFROM trading_logs\nWHERE date = '2026-09-01'\nGROUP BY symbol;", demo_partitioned=False)
+        return dict(partitions=['date','asset_class'], recommendation='Partition production datasets by UTC date and asset_class (equity, commodity, option, crypto). Add symbol only when partition sizes justify it. Compact to 128–512 MiB files; this small demo stays in one file.', sql="SELECT asset_class, symbol, count(*) AS executions, avg(latency_ms) AS latency_ms\nFROM trading_logs\nWHERE date = '2026-09-01'\nGROUP BY asset_class, symbol\nORDER BY asset_class, executions DESC;", demo_partitioned=False)
 
 class StorageOptimizationAgent:
     def run(self,analysis,size):

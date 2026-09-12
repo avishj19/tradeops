@@ -22,7 +22,7 @@ class SequenceEvidenceAgent:
                 duplicates += 1
                 continue
             seen.add(fingerprint)
-            cohorts[tuple(str(row.get(k, 'unknown')) for k in ('source', 'strategy', 'symbol'))].append(row)
+            cohorts[tuple(str(row.get(k, 'unknown')) for k in ('source', 'strategy', 'asset_class', 'symbol'))].append(row)
         findings, skipped = [], Counter()
         tested = comparisons = candidate_count = 0
         for key, records in sorted(cohorts.items()):
@@ -79,7 +79,7 @@ class SequenceEvidenceAgent:
                 if support < 5 or delta < .15:
                     continue
                 candidate_count += 1
-                finding = dict(cohort=dict(zip(('source', 'strategy', 'symbol'), key)),
+                finding = dict(cohort=dict(zip(('source', 'strategy', 'asset_class', 'symbol'), key)),
                     motif=list(motif), reference_support=baseline_support, reference_depth=n,
                     observed_support=support, observed_depth=m, reference_fraction=baseline_support/n,
                     observed_fraction=support/m, increase_percentage_points=round(delta*100, 2),
@@ -100,7 +100,7 @@ class SequenceEvidenceAgent:
                          min_fraction_increase=.15, max_gap_seconds=300),
             limitations=[
                 'Earlier data is a reference, not verified healthy behavior; recurring faults can exist in both periods.',
-                'Adjacent events within a source/strategy/symbol stream are not necessarily the same order lifecycle.',
+                'Adjacent events within a source/strategy/asset_class/symbol stream are not necessarily the same order lifecycle.',
                 'Overlapping transitions are dependent. Fractions measure transitions, not incident probability.',
                 'Filters are heuristic; no statistical significance, multiple-testing correction or causal attribution is claimed.',
                 'Unknown statuses and gaps over five minutes break sequences; tied timestamps cause cohort abstention.',
