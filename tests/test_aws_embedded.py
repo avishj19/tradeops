@@ -52,8 +52,9 @@ def test_live_flag_requires_buckets():
 
 def test_demo_run_includes_aws_block(tmp_path, monkeypatch):
     from backend import app as module
+    from backend import store
     monkeypatch.setattr(module, 'DATA', tmp_path)
-    module._db_ready.clear()
+    store._ready.clear()
     with TestClient(module.app) as client:
         health = client.get('/api/health').json()
         assert health['cloud'] == 'aws' and health['mode'] == 'aws_embedded_local'

@@ -27,9 +27,10 @@ def test_rejects_keylogging_fields():
 
 def test_hardware_latency_endpoint_links_run(tmp_path, monkeypatch):
     from backend import app as module
+    from backend import store
     from fastapi.testclient import TestClient
     monkeypatch.setattr(module, 'DATA', tmp_path)
-    module._db_ready.clear()
+    store._ready.clear()
     with TestClient(module.app) as client:
         run = client.post('/api/demo', json={'scenario': 'normal', 'format': 'json'}).json()
         body = {

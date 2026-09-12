@@ -1,5 +1,5 @@
 """Read-only ingestion CLI. Single process per local workspace; no source mutations."""
-import argparse, csv, fcntl, hashlib, io, json, os, sqlite3, time
+import argparse, csv, fcntl, hashlib, io, json, os, time
 from pathlib import Path
 from datetime import datetime, timezone
 import pyarrow as pa
@@ -35,10 +35,12 @@ def records(data,fmt,delimiter=None):
 class Runner:
     def __init__(self,config,root=None,session=None):
         self.config=config;self.root=Path(root or application.DATA);self.root.mkdir(parents=True,exist_ok=True)
-        self.db=sqlite3.connect(self.root/'tradeops.db')
-        self.db.execute('CREATE TABLE IF NOT EXISTS runs (id TEXT PRIMARY KEY,payload TEXT NOT NULL)')
-        self.db.execute('CREATE TABLE IF NOT EXISTS connector_state (key TEXT PRIMARY KEY,value TEXT NOT NULL)')
-        identity={k:config[k] for k in ('type','bucket','prefix','keys','path','pattern','dataset','format','mapping','log_group','filter_pattern','recursive','delimiter') if k in config}
+        from . import store
+        # Connectors share the desk DB with the API (WAL + busy_timeout).
+        desk=config.get('desk') or os.getenv('TRADEOPS_DESK') or 'default'
+        self.desk=store.normalize_desk(desk)
+        self.db=store.connect(store.db_path(self.root,self.desk))
+        identity={k:config[k] for k in ('type','bucket','prefix','keys','path','pattern','dataset','format','mapping','log_group','filter_pattern','recursive','delimiter','desk') if k in config}
         self.namespace=digest(json.dumps(identity,sort_keys=True).encode())
         self.session=session
         if config['type'] not in ('folder','s3','cloudwatch'):raise ValueError('Unknown connector type')
@@ -112,9 +114,15 @@ class Runner:
             result=dict(kind='external_logs',rows=len(rows),before_bytes=len(data),after_bytes=size,reduction_pct=round(100*(1-size/len(data)),1),approval='not_required',incidents=[],events=[],message='Original records preserved. No operational fields inferred. Add field mapping to enable latency/error analysis.')
         (folder/'raw.source').write_bytes(data)
         run=dict(**result,id=key,name=name,scenario='connector:'+self.config['type'],created=datetime.now(timezone.utc).isoformat(),connector={'type':self.config['type'],'identity':identity,'input_sha256':digest(data)})
-        with self.db:
-            self.db.execute('INSERT OR REPLACE INTO runs VALUES (?,?)',(key,json.dumps(run)))
-            self.put(key,True)
+        from . import store
+        with store.path_lock(store.db_path(self.root,self.desk)):
+            with self.db:
+                summary=store.summarize_run(run)
+                self.db.execute(
+                    'INSERT OR REPLACE INTO runs(id, created, summary, payload) VALUES (?,?,?,?)',
+                    (key, run.get('created'), json.dumps(summary), json.dumps(run)),
+                )
+                self.put(key,True)
         return True
     def folder(self):
         root=Path(self.config['path']).resolve(strict=True)
