@@ -50,21 +50,29 @@ class LogAnalysisAgent:
         except (UnicodeError, json.JSONDecodeError, TypeError, OverflowError) as e:
             raise ValueError('Invalid CSV/JSON log data.') from e
         # Exact normalized row duplicates only: repeated event IDs with different data survive.
-        unique={json.dumps(r,sort_keys=True):r for r in canonical}
-        clean=list(unique.values()); values=[r['latency_ms'] for r in clean]
+        # Tuple fingerprints avoid json.dumps on every row while preserving exact-match semantics.
+        unique={tuple(sorted(r.items())):r for r in canonical}
+        clean=list(unique.values())
+        values=[]; symbols=set(); oldest=newest=None
+        for r in clean:
+            values.append(r['latency_ms']); symbols.add(r['symbol']); ts=r['timestamp']
+            if oldest is None or ts<oldest: oldest=ts
+            if newest is None or ts>newest: newest=ts
         median=statistics.median(values); mad=statistics.median(abs(v-median) for v in values)
         threshold=max(100,median+6*max(mad,1))
         abnormal=[r for r in clean if r['latency_ms']>threshold or r['status'].upper() in ['ERROR','REJECTED']]
-        return clean,dict(rows=len(rows),unique_rows=len(clean),duplicates=len(rows)-len(clean),anomalies=len(abnormal),threshold_ms=round(threshold,2),p95_ms=sorted(values)[min(len(values)-1,math.ceil(len(values)*.95)-1)],symbols=sorted(set(r['symbol'] for r in clean)),oldest=min(r['timestamp'] for r in clean),newest=max(r['timestamp'] for r in clean),sample=abnormal[:8])
+        ranked=sorted(values)
+        return clean,dict(rows=len(rows),unique_rows=len(clean),duplicates=len(rows)-len(clean),anomalies=len(abnormal),threshold_ms=round(threshold,2),p95_ms=ranked[min(len(ranked)-1,math.ceil(len(ranked)*.95)-1)],symbols=sorted(symbols),oldest=oldest,newest=newest,sample=abnormal[:8])
 
 class CompressionAgent:
     def run(self,rows,destination):
         destination.mkdir(parents=True,exist_ok=True)
+        path=destination/'logs.parquet'
         table=pa.Table.from_pylist(rows)
-        pq.write_table(table,destination/'logs.parquet',compression='zstd')
-        restored=pq.read_table(destination/'logs.parquet')
-        if restored.to_pylist()!=rows: raise ValueError('Parquet round-trip verification failed.')
-        return (destination/'logs.parquet').stat().st_size
+        pq.write_table(table,path,compression='zstd')
+        # Arrow equality avoids materializing the full table as Python dicts.
+        if not pq.read_table(path).equals(table): raise ValueError('Parquet round-trip verification failed.')
+        return path.stat().st_size
 
 class QueryOptimizationAgent:
     def run(self,analysis,size):

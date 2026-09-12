@@ -143,5 +143,12 @@ def optimize_market(data,name,source,destination,symbol='',timezone_name='Etc/GM
     try:rows=parse_market(data,name,source,symbol,timezone_name)
     except (UnicodeError,KeyError,TypeError,OverflowError,zipfile.BadZipFile,EOFError,OSError) as e:raise ValueError('Invalid or unsupported dataset: '+str(e)) from e
     size=CompressionAgent().run(rows,destination)
-    repeats=len(rows)-len(set(r['source_record'] for r in rows))
-    return dict(kind='market_data',source=source,before_bytes=len(data),after_bytes=size,reduction_pct=round((1-size/len(data))*100,1),rows=len(rows),repeated_rows=repeats,removed_rows=0,symbols=sorted(set(r['symbol'] for r in rows)),first_timestamp=min(r['timestamp'] for r in rows),last_timestamp=max(r['timestamp'] for r in rows),cost=CostAgent().run(len(data),size),sha256=hashlib.sha256(data).hexdigest(),timezone_assumption=timezone_name if source=='algoseek' else ('UTC assumed (source has no zone)' if source=='singlestore' else 'UTC epoch'),sample=[{k:v for k,v in r.items() if k!='source_record'} for r in rows[:8]],incidents=[],events=[dict(agent='Supervisor',time=datetime.now(timezone.utc).isoformat(),message='Market data validated and preserved in verified Parquet. Repeated rows reported, not removed. Operational latency and security incidents cannot be inferred from these fields.')],approval='not_required')
+    symbols=set(); seen_records=set(); repeats=0; first=last=None
+    for r in rows:
+        symbols.add(r['symbol']); ts=r['timestamp']
+        if first is None or ts<first: first=ts
+        if last is None or ts>last: last=ts
+        record=r['source_record']
+        if record in seen_records: repeats+=1
+        else: seen_records.add(record)
+    return dict(kind='market_data',source=source,before_bytes=len(data),after_bytes=size,reduction_pct=round((1-size/len(data))*100,1),rows=len(rows),repeated_rows=repeats,removed_rows=0,symbols=sorted(symbols),first_timestamp=first,last_timestamp=last,cost=CostAgent().run(len(data),size),sha256=hashlib.sha256(data).hexdigest(),timezone_assumption=timezone_name if source=='algoseek' else ('UTC assumed (source has no zone)' if source=='singlestore' else 'UTC epoch'),sample=[{k:v for k,v in r.items() if k!='source_record'} for r in rows[:8]],incidents=[],events=[dict(agent='Supervisor',time=datetime.now(timezone.utc).isoformat(),message='Market data validated and preserved in verified Parquet. Repeated rows reported, not removed. Operational latency and security incidents cannot be inferred from these fields.')],approval='not_required')

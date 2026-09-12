@@ -16,9 +16,19 @@ DATA.mkdir(parents=True,exist_ok=True)
 lock=threading.RLock()
 app=FastAPI(title='TradeOps Agent API',version='1.0.0')
 app.add_middleware(TrustedHostMiddleware, allowed_hosts=['127.0.0.1','localhost','testserver'])
+_db_ready=set()
 
 def db():
-    c=sqlite3.connect(DATA/'tradeops.db'); c.execute('CREATE TABLE IF NOT EXISTS runs (id TEXT PRIMARY KEY, payload TEXT NOT NULL)');return c
+    path=DATA/'tradeops.db'
+    c=sqlite3.connect(path)
+    key=str(path)
+    # Schema/PRAGMA once per DB path so tests with patched DATA stay correct.
+    if key not in _db_ready:
+        c.execute('CREATE TABLE IF NOT EXISTS runs (id TEXT PRIMARY KEY, payload TEXT NOT NULL)')
+        c.execute('PRAGMA journal_mode=WAL')
+        c.execute('PRAGMA synchronous=NORMAL')
+        _db_ready.add(key)
+    return c
 
 def save(run):
     with db() as c:c.execute('INSERT OR REPLACE INTO runs VALUES (?,?)',(run['id'],json.dumps(run)))
