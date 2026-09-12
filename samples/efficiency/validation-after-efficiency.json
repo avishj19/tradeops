@@ -1,0 +1,35 @@
+{
+  "dataset": "samples/efficiency/latency-spike-10k.json.gz",
+  "branch": "cursor/efficiency-test-dataset-6c1f",
+  "includes_efficiency_commit": true,
+  "rows": 10400,
+  "unique_rows": 10000,
+  "duplicates": 400,
+  "anomalies": 1999,
+  "threshold_ms": 108.72,
+  "p95_ms": 1002.95,
+  "sequence_candidates": 22,
+  "tested_cohorts": 8,
+  "incidents": {
+    "execution_errors": 667,
+    "latency_spike": 1332
+  },
+  "before_bytes": 2110028,
+  "after_bytes": 146573,
+  "reduction_pct": 93.1,
+  "supervisor_ms": {
+    "all_runs_ms": [
+      238.39,
+      259.35,
+      201.04,
+      153.67,
+      173.39,
+      162.82,
+      208.37
+    ],
+    "steady_median_ms": 187.22,
+    "steady_min_ms": 153.67,
+    "steady_max_ms": 259.35
+  },
+  "status": "pass"
+}
