@@ -215,7 +215,7 @@ Articles supplied design guidance, not instructions to deploy paid services or e
 5. Expanded History into searchable recorded activity with details, source references, reports and downloads.
 6. Consolidated this README, specialized guides, provenance and tests for maintainers.
 
-See [VALIDATION.md](VALIDATION.md) for recorded checks. The current suite has **56 passing tests**. Known upstream test-client deprecation warnings do not represent failed tests. UI verification covered populated results, archive cancellation, network calculation, real sample import, history search and detail expansion. No claim is made of exhaustive accessibility, browser or production load testing.
+See [VALIDATION.md](VALIDATION.md) for recorded checks. The current suite has **63 passing tests**. Known upstream test-client deprecation warnings do not represent failed tests. UI verification covered populated results, archive cancellation, network calculation, real sample import, history search and detail expansion. No claim is made of exhaustive accessibility, browser or production load testing.
 
 ## Code map for debugging
 
@@ -306,3 +306,48 @@ Validation: eight added tests cover stable streams, known changes and exact coun
 reference-only thresholds, duplicate inflation, ordering, cohort isolation, ambiguous
 timestamps, sparse/unknown data, long gaps and provider-neutral context. Synthetic
 controls validate implementation behavior; real-world detection accuracy remains unmeasured.
+
+## Measured layout experiments
+
+Open **Experiment lab** for the latest recorded experiment. To reproduce:
+
+```bash
+python -m pip install -e '.[benchmark,test]'
+python -m scripts.benchmark_lab
+```
+
+This downloads six public Binance spot trade archives (BTCUSDT and ETHUSDT,
+January 1–3, 2020), verifies publisher SHA-256 checksums and retains provenance.
+Downloads are capped at 20 MiB/archive, expanded files at 150 MiB/archive.
+Raw downloads and generated candidates stay under ignored `data/benchmarks/`.
+Machine-readable reports, SQL and all individual query timings are in `benchmarks/`.
+Public source documentation: https://github.com/binance/binance-public-data
+Engine documentation: https://duckdb.org/docs/current/data/parquet/overview
+and https://duckdb.org/docs/current/data/csv/overview
+
+The bounded search compares combined gzip CSV, Zstd Parquet, date/symbol-partitioned
+Parquet and date/symbol-partitioned gzip CSV. The latter is a stronger control for
+partition pruning, so we do not attribute every speedup to the file format.
+Each candidate preserves the nine canonical string columns and all repeated records.
+Full bidirectional `EXCEPT ALL` checks and matching results for every timed query
+verify preservation. Numeric quantities are explicitly cast to decimal in queries;
+VWAP returns exact numerator/denominator components, not approximate division.
+
+Five calibration and five evaluation rounds run in seeded randomized order after
+warmup, on a single DuckDB thread with a 1 GB engine memory limit. The Supervisor's
+pure selection function (`backend/experiments.py`) minimizes measured conversion
+seconds plus hypothetical query count times calibration median query time, subject
+to verification and a 200 MiB additional-storage budget. It can choose no conversion.
+Results evaluate the selected choice on separate timing rounds of the same data;
+this is not validation on unseen workloads. Counts of 1, 100 and 10,000 are modeled
+usage scenarios, not claims that all those queries were executed.
+
+This implements a small proposal → experiment → verification → selection workflow.
+It does not use the internal OpenAI research model, parallel LLM agents, formal
+proofs or autonomous AWS operations. Ordinary correctness checks are not a Lean proof.
+The comparison is local and warm-cache: no AWS billing, cold-cache performance,
+physical bytes scanned, measured peak memory or statistical significance is claimed.
+Conversion is timed once. Download/normalization and the search/verification costs
+are excluded from projected candidate totals; total experiment elapsed time is
+reported separately. Do not claim net optimizer savings without amortizing those
+costs over actual future use. Original ZIPs and baseline gzip remain retained.

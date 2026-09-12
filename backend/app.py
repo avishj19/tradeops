@@ -129,3 +129,10 @@ def report(id:str):return get(id)
 @app.get('/')
 def home():return FileResponse(ROOT/'frontend/index.html')
 app.mount('/static',StaticFiles(directory=ROOT/'frontend'),name='static')
+
+
+@app.get('/api/experiments/latest')
+def latest_experiment():
+    path=ROOT/'benchmarks'/'latest.json'
+    if not path.exists():raise HTTPException(404,'Run python -m scripts.benchmark_lab to create measurements.')
+    return FileResponse(path,media_type='application/json')

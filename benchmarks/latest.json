@@ -1,0 +1,504 @@
+{
+  "created": "2026-09-12T01:05:51.886437+00:00",
+  "rows": 1350922,
+  "sources": [
+    {
+      "url": "https://data.binance.vision/data/spot/daily/trades/BTCUSDT/BTCUSDT-trades-2020-01-01.zip",
+      "checksum_url": "https://data.binance.vision/data/spot/daily/trades/BTCUSDT/BTCUSDT-trades-2020-01-01.zip.CHECKSUM",
+      "sha256": "e710f3819a54c46a78188f67043b4de7d8914cfda8abb5f0075eb4a4d90bd042",
+      "archive_bytes": 3510443,
+      "expanded_bytes": 14027980,
+      "rows": 194010
+    },
+    {
+      "url": "https://data.binance.vision/data/spot/daily/trades/BTCUSDT/BTCUSDT-trades-2020-01-02.zip",
+      "checksum_url": "https://data.binance.vision/data/spot/daily/trades/BTCUSDT/BTCUSDT-trades-2020-01-02.zip.CHECKSUM",
+      "sha256": "1a46e41ce48ba235a5db0d54be608e13c247ea5df41f93939c946030eac3e1b7",
+      "archive_bytes": 5420667,
+      "expanded_bytes": 21893679,
+      "rows": 302667
+    },
+    {
+      "url": "https://data.binance.vision/data/spot/daily/trades/BTCUSDT/BTCUSDT-trades-2020-01-03.zip",
+      "checksum_url": "https://data.binance.vision/data/spot/daily/trades/BTCUSDT/BTCUSDT-trades-2020-01-03.zip.CHECKSUM",
+      "sha256": "4d6e6e342799433f98f8ff7a414d83868aa611ba68d3fc4a1c17edd3ec2d8acc",
+      "archive_bytes": 9381069,
+      "expanded_bytes": 37632723,
+      "rows": 519854
+    },
+    {
+      "url": "https://data.binance.vision/data/spot/daily/trades/ETHUSDT/ETHUSDT-trades-2020-01-01.zip",
+      "checksum_url": "https://data.binance.vision/data/spot/daily/trades/ETHUSDT/ETHUSDT-trades-2020-01-01.zip.CHECKSUM",
+      "sha256": "df1f7dda442673eac73849646223761492bd0f445aa64e82c332d6015c9e9fab",
+      "archive_bytes": 1285210,
+      "expanded_bytes": 5384759,
+      "rows": 75888
+    },
+    {
+      "url": "https://data.binance.vision/data/spot/daily/trades/ETHUSDT/ETHUSDT-trades-2020-01-02.zip",
+      "checksum_url": "https://data.binance.vision/data/spot/daily/trades/ETHUSDT/ETHUSDT-trades-2020-01-02.zip.CHECKSUM",
+      "sha256": "02a9c29dc7b0f20424d0dc18d91464d5b46d1e0ed4bb8220da2c9acdc0a14506",
+      "archive_bytes": 1624679,
+      "expanded_bytes": 6833125,
+      "rows": 96193
+    },
+    {
+      "url": "https://data.binance.vision/data/spot/daily/trades/ETHUSDT/ETHUSDT-trades-2020-01-03.zip",
+      "checksum_url": "https://data.binance.vision/data/spot/daily/trades/ETHUSDT/ETHUSDT-trades-2020-01-03.zip.CHECKSUM",
+      "sha256": "428220362d77e08e8350b1a8cce661076bde80f1d021a63a4c87d79c47d9ffb3",
+      "archive_bytes": 2713884,
+      "expanded_bytes": 11550008,
+      "rows": 162310
+    }
+  ],
+  "candidates": [
+    {
+      "layout": "csv_gzip",
+      "verified": true,
+      "conversion_s": 0.0,
+      "bytes": 23821062,
+      "extra_bytes": 0,
+      "query_s": 0.5300019169808365
+    },
+    {
+      "layout": "parquet",
+      "verified": true,
+      "conversion_s": 1.3116462919861078,
+      "bytes": 20103218,
+      "extra_bytes": 20103218,
+      "query_s": 0.028246291010873392
+    },
+    {
+      "layout": "partitioned",
+      "verified": true,
+      "conversion_s": 1.4385723340092227,
+      "bytes": 20121753,
+      "extra_bytes": 20121753,
+      "query_s": 0.023415499978000298
+    },
+    {
+      "layout": "partitioned_csv",
+      "verified": true,
+      "conversion_s": 4.96542579200468,
+      "bytes": 23746780,
+      "extra_bytes": 23746780,
+      "query_s": 0.10799962500459515
+    }
+  ],
+  "queries": {
+    "selective": "SELECT count(*), sum(CAST(quantity AS DECIMAL(28,8))) FROM {table} WHERE symbol='BTCUSDT' AND date='2020-01-02' AND CAST(timestamp_ms AS BIGINT) BETWEEN 1577923200000 AND 1577926800000",
+    "daily_volume": "SELECT date,symbol,count(*),sum(CAST(quantity AS DECIMAL(28,8))) FROM {table} GROUP BY date,symbol ORDER BY date,symbol",
+    "vwap_components": "SELECT symbol,sum(CAST(quote_quantity AS DECIMAL(28,8))),sum(CAST(quantity AS DECIMAL(28,8))) FROM {table} GROUP BY symbol ORDER BY symbol"
+  },
+  "measurements": {
+    "calibration": {
+      "csv_gzip": {
+        "selective": [
+          0.5300019169808365,
+          0.691499415988801,
+          0.7764025829965249,
+          0.5258946659741923,
+          0.5263177500164602
+        ],
+        "daily_volume": [
+          0.654157540993765,
+          0.7621435830078553,
+          0.7821992079843767,
+          0.6544994590221904,
+          0.64379812500556
+        ],
+        "vwap_components": [
+          1.3053797090251464,
+          1.55943383302656,
+          1.4567532090004534,
+          1.45475229198928,
+          1.2931750839925371
+        ]
+      },
+      "parquet": {
+        "selective": [
+          0.028246291010873392,
+          0.029411541996523738,
+          0.03479908299050294,
+          0.026436375017510727,
+          0.024608290987089276
+        ],
+        "daily_volume": [
+          0.1701029579853639,
+          0.22062804098823108,
+          0.26265558297745883,
+          0.3849220000265632,
+          0.16778970800805837
+        ],
+        "vwap_components": [
+          0.9259392920066603,
+          0.9588149169867393,
+          0.8637410829833243,
+          0.9015276670106687,
+          0.875858999992488
+        ]
+      },
+      "partitioned": {
+        "selective": [
+          0.023415499978000298,
+          0.02811291700345464,
+          0.026642416982213035,
+          0.02334254200104624,
+          0.022601167001994327
+        ],
+        "daily_volume": [
+          0.17354074999457225,
+          0.17415466700913385,
+          0.20718674999079667,
+          0.1525089999777265,
+          0.36251054200693034
+        ],
+        "vwap_components": [
+          1.1540261250047479,
+          1.0568204589944798,
+          0.8504954169911798,
+          0.9196782090002671,
+          0.8638118749950081
+        ]
+      },
+      "partitioned_csv": {
+        "selective": [
+          0.10799962500459515,
+          0.1345742080011405,
+          0.1478531250031665,
+          0.1013688329840079,
+          0.10138191698933952
+        ],
+        "daily_volume": [
+          0.5586611249891575,
+          0.7051192090148106,
+          0.5217075830150861,
+          0.5433961249946151,
+          0.5220041669963393
+        ],
+        "vwap_components": [
+          1.2352935409871861,
+          1.209269666025648,
+          1.3685414580104407,
+          1.3496837920101825,
+          1.3410504170169588
+        ]
+      }
+    },
+    "evaluation": {
+      "csv_gzip": {
+        "selective": [
+          1.9176731249899603,
+          0.5467229999776464,
+          0.5275252079882193,
+          0.5288500829774421,
+          0.5263959169969894
+        ],
+        "daily_volume": [
+          2.104030958027579,
+          0.651491625001654,
+          0.6496231660130434,
+          0.6551646670268383,
+          0.6487932089949027
+        ],
+        "vwap_components": [
+          1.436432957998477,
+          1.3053082500118762,
+          1.3304015419853386,
+          1.2914898750022985,
+          1.309048791998066
+        ]
+      },
+      "parquet": {
+        "selective": [
+          0.13380354101536795,
+          0.031338041997514665,
+          0.04150970801129006,
+          0.02551829200820066,
+          0.024734415987040848
+        ],
+        "daily_volume": [
+          0.16214929198031314,
+          0.17517979099648073,
+          0.1912296249938663,
+          0.17585708299884573,
+          0.1670965839875862
+        ],
+        "vwap_components": [
+          0.96194516698597,
+          0.9379867499810643,
+          0.9090043330215849,
+          0.8528987500176299,
+          0.8581873750081286
+        ]
+      },
+      "partitioned": {
+        "selective": [
+          0.02098883400321938,
+          0.03435912501299754,
+          0.022764875000575557,
+          0.025474166992353275,
+          0.021031250013038516
+        ],
+        "daily_volume": [
+          0.15578549998463131,
+          0.15946374999475665,
+          0.15375637498800643,
+          0.16141816700110212,
+          0.15378891699947417
+        ],
+        "vwap_components": [
+          0.8494598749966826,
+          0.8796195000177249,
+          1.0540077920013573,
+          0.8851092080003582,
+          0.8520656670152675
+        ]
+      },
+      "partitioned_csv": {
+        "selective": [
+          0.09961775000556372,
+          0.10428520801360719,
+          0.10123316699173301,
+          0.10187562499777414,
+          0.10149529101909138
+        ],
+        "daily_volume": [
+          0.5204118340043351,
+          0.5642555000085849,
+          0.535225832980359,
+          0.5488828340021428,
+          0.5232457499951124
+        ],
+        "vwap_components": [
+          1.3441682910197414,
+          1.2081692079955246,
+          1.193763957999181,
+          1.196926791977603,
+          1.20626308399369
+        ]
+      }
+    }
+  },
+  "decisions": [
+    {
+      "profile": "selective",
+      "query_count": 1,
+      "selected": "csv_gzip",
+      "scores": [
+        {
+          "layout": "csv_gzip",
+          "predicted_total_s": 0.5300019169808365
+        },
+        {
+          "layout": "parquet",
+          "predicted_total_s": 1.3398925829969812
+        },
+        {
+          "layout": "partitioned",
+          "predicted_total_s": 1.461987833987223
+        },
+        {
+          "layout": "partitioned_csv",
+          "predicted_total_s": 5.073425417009275
+        }
+      ],
+      "objective": "Minimize conversion seconds + query count \u00d7 calibration query seconds; retained baseline storage is common to all choices.",
+      "evaluation_total_s": {
+        "csv_gzip": 0.5288500829774421,
+        "parquet": 1.3429843339836225,
+        "partitioned": 1.4613372090097982,
+        "partitioned_csv": 5.066921083023772
+      },
+      "evaluation_speedup_vs_csv": 1.0,
+      "evaluation_speedup_vs_always_parquet": 2.53944241896036,
+      "evaluation_speedup_vs_partitioned_csv": 9.581015955404322
+    },
+    {
+      "profile": "selective",
+      "query_count": 100,
+      "selected": "partitioned",
+      "scores": [
+        {
+          "layout": "partitioned",
+          "predicted_total_s": 3.7801223318092525
+        },
+        {
+          "layout": "parquet",
+          "predicted_total_s": 4.136275393073447
+        },
+        {
+          "layout": "partitioned_csv",
+          "predicted_total_s": 15.765388292464195
+        },
+        {
+          "layout": "csv_gzip",
+          "predicted_total_s": 53.000191698083654
+        }
+      ],
+      "objective": "Minimize conversion seconds + query count \u00d7 calibration query seconds; retained baseline storage is common to all choices.",
+      "evaluation_total_s": {
+        "csv_gzip": 52.88500829774421,
+        "parquet": 4.445450491737574,
+        "partitioned": 3.7150598340667784,
+        "partitioned_csv": 15.114954893913819
+      },
+      "evaluation_speedup_vs_csv": 14.235304587235241,
+      "evaluation_speedup_vs_always_parquet": 1.1966026632931122,
+      "evaluation_speedup_vs_partitioned_csv": 4.068562975839846
+    },
+    {
+      "profile": "selective",
+      "query_count": 10000,
+      "selected": "partitioned",
+      "scores": [
+        {
+          "layout": "partitioned",
+          "predicted_total_s": 235.5935721140122
+        },
+        {
+          "layout": "parquet",
+          "predicted_total_s": 283.77455640072003
+        },
+        {
+          "layout": "partitioned_csv",
+          "predicted_total_s": 1084.9616758379561
+        },
+        {
+          "layout": "csv_gzip",
+          "predicted_total_s": 5300.019169808365
+        }
+      ],
+      "objective": "Minimize conversion seconds + query count \u00d7 calibration query seconds; retained baseline storage is common to all choices.",
+      "evaluation_total_s": {
+        "csv_gzip": 5288.500829774421,
+        "parquet": 314.69206626713276,
+        "partitioned": 229.0873223397648,
+        "partitioned_csv": 1019.9183359829185
+      },
+      "evaluation_speedup_vs_csv": 23.085087274846753,
+      "evaluation_speedup_vs_always_parquet": 1.3736773517323038,
+      "evaluation_speedup_vs_partitioned_csv": 4.452094186470317
+    },
+    {
+      "profile": "mixed",
+      "query_count": 1,
+      "selected": "csv_gzip",
+      "scores": [
+        {
+          "layout": "csv_gzip",
+          "predicted_total_s": 0.8797512226641022
+        },
+        {
+          "layout": "parquet",
+          "predicted_total_s": 1.6951136249893655
+        },
+        {
+          "layout": "partitioned",
+          "predicted_total_s": 1.8109884593383563
+        },
+        {
+          "layout": "partitioned_csv",
+          "predicted_total_s": 5.629574514343403
+        }
+      ],
+      "objective": "Minimize conversion seconds + query count \u00d7 calibration query seconds; retained baseline storage is common to all choices.",
+      "evaluation_total_s": {
+        "csv_gzip": 0.8297968333257206,
+        "parquet": 1.6834870139913012,
+        "partitioned": 1.7912956256768666,
+        "partitioned_csv": 5.579753861335727
+      },
+      "evaluation_speedup_vs_csv": 1.0,
+      "evaluation_speedup_vs_always_parquet": 2.0287942136921617,
+      "evaluation_speedup_vs_partitioned_csv": 6.724240967482101
+    },
+    {
+      "profile": "mixed",
+      "query_count": 100,
+      "selected": "partitioned",
+      "scores": [
+        {
+          "layout": "partitioned",
+          "predicted_total_s": 38.680184866922595
+        },
+        {
+          "layout": "parquet",
+          "predicted_total_s": 39.658379592311874
+        },
+        {
+          "layout": "partitioned_csv",
+          "predicted_total_s": 71.38029802587698
+        },
+        {
+          "layout": "csv_gzip",
+          "predicted_total_s": 87.97512226641022
+        }
+      ],
+      "objective": "Minimize conversion seconds + query count \u00d7 calibration query seconds; retained baseline storage is common to all choices.",
+      "evaluation_total_s": {
+        "csv_gzip": 82.97968333257207,
+        "parquet": 38.495718492505446,
+        "partitioned": 36.710901500773616,
+        "partitioned_csv": 66.39823272510935
+      },
+      "evaluation_speedup_vs_csv": 2.260355369666512,
+      "evaluation_speedup_vs_always_parquet": 1.0486181738602691,
+      "evaluation_speedup_vs_partitioned_csv": 1.8086788940258012
+    },
+    {
+      "profile": "mixed",
+      "query_count": 10000,
+      "selected": "partitioned",
+      "scores": [
+        {
+          "layout": "partitioned",
+          "predicted_total_s": 3725.5998256253465
+        },
+        {
+          "layout": "parquet",
+          "predicted_total_s": 3835.984976324563
+        },
+        {
+          "layout": "partitioned_csv",
+          "predicted_total_s": 6646.452649179235
+        },
+        {
+          "layout": "csv_gzip",
+          "predicted_total_s": 8797.512226641022
+        }
+      ],
+      "objective": "Minimize conversion seconds + query count \u00d7 calibration query seconds; retained baseline storage is common to all choices.",
+      "evaluation_total_s": {
+        "csv_gzip": 8297.968333257206,
+        "parquet": 3719.71886634392,
+        "partitioned": 3528.6714890104486,
+        "partitioned_csv": 6148.246119102472
+      },
+      "evaluation_speedup_vs_csv": 2.351584260280409,
+      "evaluation_speedup_vs_always_parquet": 1.0541414461302112,
+      "evaluation_speedup_vs_partitioned_csv": 1.742368519781544
+    }
+  ],
+  "environment": {
+    "python": "3.14.7",
+    "duckdb": "1.5.5",
+    "platform": "macOS-26.6.2-arm64-arm-64bit-Mach-O",
+    "threads": 1,
+    "memory_limit": "1GB"
+  },
+  "elapsed_s": 131.21990954098874,
+  "limitations": [
+    "Local DuckDB warm-cache benchmarks, not AWS/Athena timing or billing.",
+    "Six historical daily spot trade files from one provider; no synthetic duplication and no application logs.",
+    "Calibration and evaluation use separate timing rounds on the same data/queries, not unseen datasets.",
+    "Conversion measured once; totals extrapolate median query time to hypothetical query counts.",
+    "Download and normalization are common preparation costs excluded from the layout decision. Original ZIPs and canonical gzip are retained.",
+    "Full bidirectional EXCEPT ALL checks preserve duplicate multiplicity and every canonical string field; every timed query is checked.",
+    "VWAP query returns exact numerator/denominator; no floating-point division is benchmarked.",
+    "Search and verification overhead is reported in elapsed_s but excluded from projected layout totals. No net optimizer speedup claim.",
+    "Baseline is a normalized combined gzip, not the publisher ZIP layout. Partitioned gzip is a stronger control for pruning benefits.",
+    "No measured peak memory, physical bytes scanned, concurrency, cold cache, significance tests, or dollar savings.",
+    "Bounded exhaustive four-candidate search with deterministic selection; no LLM or autonomous cloud changes."
+  ]
+}

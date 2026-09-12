@@ -26,3 +26,11 @@ History UI: verified 33 saved events across 7 runs, search narrowed BitMEX to 2 
   reference-only calibration, cohort isolation, ambiguity, missing/insufficient
   evidence, long gaps, and provider-neutral AI context.
 - No real-world sensitivity/specificity or causal diagnosis claim is made.
+
+## Public-data optimization experiment
+
+The active test suite now has 63 tests. Seven selector cases check conversion
+amortization, storage constraints, rejection of unverified candidates, no eligible
+candidate and invalid workload profiles. The benchmark additionally performs full
+record multiset equality and checks every timed query result on downloaded data.
+See `benchmarks/latest.json` for actual measurements, provenance and caveats.
