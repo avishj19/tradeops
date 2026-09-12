@@ -34,3 +34,8 @@ amortization, storage constraints, rejection of unverified candidates, no eligib
 candidate and invalid workload profiles. The benchmark additionally performs full
 record multiset equality and checks every timed query result on downloaded data.
 See `benchmarks/latest.json` for actual measurements, provenance and caveats.
+
+After merging the separately authored catalogue/SingleStore changes, installed their
+LZ4 dependency and added it to pyproject.toml. Combined suite: **76 passed**, with
+two upstream deprecation warnings. The four-layout benchmark is independent of those
+source-adapter changes.

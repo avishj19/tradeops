@@ -215,7 +215,7 @@ Articles supplied design guidance, not instructions to deploy paid services or e
 5. Expanded History into searchable recorded activity with details, source references, reports and downloads.
 6. Consolidated this README, specialized guides, provenance and tests for maintainers.
 
-See [VALIDATION.md](VALIDATION.md) for recorded checks. The current suite has **63 passing tests**. Known upstream test-client deprecation warnings do not represent failed tests. UI verification covered populated results, archive cancellation, network calculation, real sample import, history search and detail expansion. No claim is made of exhaustive accessibility, browser or production load testing.
+See [VALIDATION.md](VALIDATION.md) for recorded checks. The current suite has **76 passing tests**. Known upstream test-client deprecation warnings do not represent failed tests. UI verification covered populated results, archive cancellation, network calculation, real sample import, history search and detail expansion. No claim is made of exhaustive accessibility, browser or production load testing.
 
 ## Code map for debugging
 
