@@ -19,7 +19,8 @@ def test_formats_and_roundtrip(tmp_path,fmt):
     r=SupervisorAgent().run(data,'logs.'+fmt,tmp_path)
     assert r['analysis']['duplicates']==15
     assert pq.read_table(tmp_path/'logs.parquet').num_rows==100
-    assert len(r['events'])==7
+    assert any(e['agent']=='Sequence Evidence' for e in r['events'])
+    assert 'sequence_evidence' in r
 
 @pytest.mark.parametrize('rows',[[],{},[{'foo':1}],[{'timestamp':'bad','event_id':'1','symbol':'X','latency_ms':1,'status':'OK'}]])
 def test_invalid_input(rows):

@@ -17,3 +17,12 @@ Dataset update: 3,427 real Binance trades passed checksum and Parquet round-trip
 S3 update: anonymously listed spot/futures/BitMEX prefixes; actual selected-object ingestion and zero-new-record repeat scans passed. Binance companion checksums verified. Hyperliquid anonymous listing returned Requester Pays AccessDenied; no billable opt-in sent. See samples/s3-verification.json. Folder and CloudWatch retry/pagination behavior tested locally with fakes.
 
 History UI: verified 33 saved events across 7 runs, search narrowed BitMEX to 2 events, and expansion exposed source metadata and download links. Frontend syntax check passed.
+
+## Sequence evidence extension
+
+- Full suite: 56 tests passed (two upstream deprecation warnings).
+- Frontend: `node --check frontend/app.js` passed.
+- Eight sequence tests exercise known changes, stable controls, duplicate inflation,
+  reference-only calibration, cohort isolation, ambiguity, missing/insufficient
+  evidence, long gaps, and provider-neutral AI context.
+- No real-world sensitivity/specificity or causal diagnosis claim is made.

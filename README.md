@@ -1,6 +1,6 @@
 # TradeOps
 
-TradeOps is a local operations dashboard for small, specialized financial businesses that want to understand their logs and market-data files, reduce analytical storage costs, and review changes before taking action. It combines a Python API, a browser dashboard, six deterministic analysis agents, source-specific market-data readers, and read-only folder/S3/CloudWatch connectors.
+TradeOps is a local operations dashboard for small, specialized financial businesses that want to understand their logs and market-data files, reduce analytical storage costs, and review changes before taking action. It combines a Python API, a browser dashboard, seven deterministic analysis agents, source-specific market-data readers, and read-only folder/S3/CloudWatch connectors.
 
 **Current status:** working local demo with real Parquet conversion and tested public S3 imports. It is not a deployed AWS service, autonomous LLM system, trading engine, or production compliance product. No AWS credentials are needed for the generated scenarios or bundled samples.
 
@@ -94,7 +94,7 @@ Browser/API upload or read-only connector
   → dashboard, history, recommendations and downloads
 ```
 
-### The six agents
+### The seven agents
 
 | Agent | Implementation and responsibility |
 |---|---|
@@ -215,7 +215,7 @@ Articles supplied design guidance, not instructions to deploy paid services or e
 5. Expanded History into searchable recorded activity with details, source references, reports and downloads.
 6. Consolidated this README, specialized guides, provenance and tests for maintainers.
 
-See [VALIDATION.md](VALIDATION.md) for recorded checks. The current suite has **48 passing tests**. Known upstream test-client deprecation warnings do not represent failed tests. UI verification covered populated results, archive cancellation, network calculation, real sample import, history search and detail expansion. No claim is made of exhaustive accessibility, browser or production load testing.
+See [VALIDATION.md](VALIDATION.md) for recorded checks. The current suite has **56 passing tests**. Known upstream test-client deprecation warnings do not represent failed tests. UI verification covered populated results, archive cancellation, network calculation, real sample import, history search and detail expansion. No claim is made of exhaustive accessibility, browser or production load testing.
 
 ## Code map for debugging
 
@@ -263,3 +263,46 @@ For a useful bug report, include the failing route/command, sanitized configurat
 - `GET /api/runs/{id}/report`, `GET /api/runs/{id}/download`
 
 Use `/docs` for request schemas. GitHub stores the source, not the running localhost service or your private workspace history.
+
+
+## Sequencing-inspired evidence agent
+
+The user-supplied educational DNA substitution-counter example inspired a software
+analysis method, not a cancer detector or biological model. Its useful principles
+are reference comparison, evidence depth, ambiguity handling and independent validation.
+
+`backend/sequences.py` implements the Sequence Evidence Agent. After operational
+log validation, it groups events by source, strategy and symbol, orders them by
+UTC timestamp, and uses the earliest 70% as reference and the later 30% as observation.
+The reference alone determines the robust latency threshold. Status/latency pairs
+form a fixed token vocabulary; adjacent token pairs are the sequence motifs.
+
+Candidates require at least 30 eligible transitions per period, 5 supporting later
+transitions and a 15-percentage-point increase. Reports include both counts and
+denominators, time boundaries, example event IDs, thresholds, skipped cohorts and
+validation recommendations. These are heuristic filters, not significance tests.
+The reference is not certified healthy. Changes may reflect traffic, deployment,
+seasonality or faults. Overlapping transitions are dependent, and cohort adjacency
+does not establish that events belong to the same order or request.
+
+Exact duplicate rows are excluded from this analysis. Unknown statuses and gaps
+over five minutes break sequences; tied timestamps cause cohort abstention. Reports
+retain at most 50 strongest candidates and disclose truncation. Sorting is O(N log N)
+in the worst case, with O(N) working memory under the existing 200,000-record cap;
+this is not an out-of-core or distributed sequence pipeline.
+
+Run **Latency incident** to see the new evidence panel on Overview and Agent activity.
+New operational runs persist the evidence in their JSON reports and history; old
+reports are not retroactively recomputed. Market datasets and generic unmapped logs
+are not analyzed by this agent. No archive, suppression or deletion is authorized
+by its findings. The existing optimization cost model is not changed by this agent.
+
+`build_ai_messages(result)` produces optional provider-neutral explanatory context
+with instructions to treat identifiers as untrusted data and separate observations
+from hypotheses. It does not invoke a model or transmit any data. A future LLM
+integration must enforce permissions outside the model; prompt text is not a security boundary.
+
+Validation: eight added tests cover stable streams, known changes and exact counts,
+reference-only thresholds, duplicate inflation, ordering, cohort isolation, ambiguous
+timestamps, sparse/unknown data, long gaps and provider-neutral context. Synthetic
+controls validate implementation behavior; real-world detection accuracy remains unmeasured.

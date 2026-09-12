@@ -3,10 +3,11 @@ import csv, io, json, math, random, statistics
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from .planning import incidents
+from .sequences import SequenceEvidenceAgent
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-NAMES = ['Supervisor', 'Log Analysis', 'Storage Optimization', 'Compression', 'Query Optimization', 'Cost']
+NAMES = ['Supervisor', 'Log Analysis', 'Storage Optimization', 'Compression', 'Query Optimization', 'Cost', 'Sequence Evidence']
 REQUIRED = {'timestamp', 'event_id', 'symbol', 'latency_ms', 'status'}
 
 def generate(scenario='normal', count=10000):
@@ -85,6 +86,8 @@ class SupervisorAgent:
         record('Supervisor','Started analysis. Raw evidence will be preserved.')
         rows,analysis=LogAnalysisAgent().run(data,filename)
         record('Log Analysis',f"Validated {analysis['rows']:,} rows; detected {analysis['duplicates']:,} exact duplicates and {analysis['anomalies']:,} anomalous records.")
+        sequence=SequenceEvidenceAgent().run(rows)
+        record('Sequence Evidence',f"Compared {sequence['tested_cohorts']} cohorts; found {sequence['candidate_count']} candidate sequence changes. Review only; no causal conclusion.")
         after=CompressionAgent().run(rows,destination)
         record('Compression',f'Wrote and round-trip verified Zstandard Parquet: {after:,} bytes.')
         query=QueryOptimizationAgent().run(analysis,after)
@@ -94,4 +97,4 @@ class SupervisorAgent:
         cost=CostAgent().run(len(data),after)
         record('Cost','Calculated workload estimates including retained raw storage and Athena minimum billing.')
         record('Supervisor','Optimization complete. Archive requires separate approval.' if storage['eligible'] else 'Optimization complete. Archive is not eligible.')
-        return dict(incidents=incidents(rows,analysis['threshold_ms']),analysis=analysis,before_bytes=len(data),after_bytes=after,reduction_pct=round((1-after/len(data))*100,1),query=query,storage=storage,cost=cost,events=events)
+        return dict(sequence_evidence=sequence,incidents=incidents(rows,analysis['threshold_ms']),analysis=analysis,before_bytes=len(data),after_bytes=after,reduction_pct=round((1-after/len(data))*100,1),query=query,storage=storage,cost=cost,events=events)
