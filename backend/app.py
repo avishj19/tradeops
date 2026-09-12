@@ -10,6 +10,7 @@ from typing import Literal
 from .agents import SupervisorAgent, generate, NAMES
 from .planning import NetworkPlan, network_plan
 from .datasets import optimize_market
+from aws.adapter import embed_run_in_aws, aws_config_from_env
 ROOT=Path(__file__).resolve().parents[1]
 DATA=Path(os.getenv('TRADEOPS_DATA',str(ROOT/'data')))
 DATA.mkdir(parents=True,exist_ok=True)
@@ -17,6 +18,23 @@ lock=threading.RLock()
 app=FastAPI(title='TradeOps Agent API',version='1.0.0')
 app.add_middleware(TrustedHostMiddleware, allowed_hosts=['127.0.0.1','localhost','testserver'])
 _db_ready=set()
+
+def attach_aws(run, data, name, folder):
+    """Embed the AWS S3→EventBridge→Glue→Athena contract into every agent run."""
+    parquet=folder/'optimized'/'logs.parquet'
+    report={k:run[k] for k in run if k not in {'events'}}
+    try:
+        aws=embed_run_in_aws(run['id'], data, name, parquet if parquet.exists() else None, report, DATA)
+    except Exception as e:
+        aws=dict(embedded=False, cloud='aws', live=False, error=str(e), note='AWS embedding failed; local agent results are still valid.')
+    run['aws']=aws
+    mode=aws.get('mode','unavailable')
+    run.setdefault('events',[]).append(dict(
+        agent='Supervisor',
+        message=f"AWS workflow embedded ({mode}): staged raw+Parquet on the S3 contract and emitted EventBridge/Athena handles." if aws.get('embedded') else f"AWS embedding skipped: {aws.get('error','unknown error')}",
+        time=datetime.now(timezone.utc).isoformat(),
+    ))
+    return run
 
 def db():
     path=DATA/'tradeops.db'
@@ -63,6 +81,7 @@ def process(data,name,scenario='uploaded'):
         import shutil;shutil.rmtree(folder,ignore_errors=True);raise HTTPException(422,str(e))
     (folder/('raw'+Path(name).suffix.lower())).write_bytes(data)
     run=dict(id=id,name=Path(name).name,scenario=scenario,created=datetime.now(timezone.utc).isoformat(),approval='pending' if result['storage']['eligible'] else 'not_required',**result)
+    attach_aws(run, data, name, folder)
     save(run);return run
 
 def process_market(data,name,source,symbol='',timezone_name='Etc/GMT+5'):
@@ -73,6 +92,7 @@ def process_market(data,name,source,symbol='',timezone_name='Etc/GMT+5'):
         import shutil;shutil.rmtree(folder,ignore_errors=True);raise HTTPException(422,str(e))
     (folder/'raw.source').write_bytes(data)
     run=dict(id=id,name=Path(name).name,scenario=source,created=datetime.now(timezone.utc).isoformat(),**result)
+    attach_aws(run, data, name, folder)
     save(run);return run
 
 @app.post('/api/datasets/upload')
@@ -95,7 +115,44 @@ def binance_sample():
 def plan(body:NetworkPlan):return network_plan(body)
 
 @app.get('/api/health')
-def health():return dict(status='ok',mode='local',agents=NAMES)
+def health():
+    cfg=aws_config_from_env()
+    return dict(
+        status='ok',
+        mode='aws_live' if cfg['live'] else 'aws_embedded_local',
+        cloud='aws',
+        agents=NAMES,
+        aws=dict(live=cfg['live'], region=cfg['region'], raw_bucket=cfg['raw_bucket'], optimized_bucket=cfg['optimized_bucket'], glue_job=cfg['glue_job'], athena_workgroup=cfg['athena_workgroup'], event_bus=cfg['event_bus']),
+    )
+
+@app.get('/api/aws/status')
+def aws_status():
+    cfg=aws_config_from_env()
+    mirror=DATA/'aws-mirror'
+    return dict(
+        cloud='aws',
+        live=cfg['live'],
+        embedded=True,
+        region=cfg['region'],
+        buckets=dict(raw=cfg['raw_bucket'], optimized=cfg['optimized_bucket']),
+        glue_job=cfg['glue_job'],
+        athena_workgroup=cfg['athena_workgroup'],
+        event_bus=cfg['event_bus'],
+        local_mirror=str(mirror) if mirror.exists() else None,
+        activation='Set TRADEOPS_AWS_LIVE=1 with TRADEOPS_AWS_RAW_BUCKET, TRADEOPS_AWS_OPTIMIZED_BUCKET, TRADEOPS_AWS_GLUE_JOB to switch the same agent workflow onto live AWS APIs.',
+        services=['s3','events','glue','athena'],
+    )
+
+@app.post('/api/aws/events')
+def aws_ingest_event(event: dict):
+    """Plan an EventBridge S3 Object Created event through the same AWS adapter contract."""
+    from aws.adapter import get_aws_backend
+    backend, cfg = get_aws_backend(DATA)
+    try:
+        plan=backend.plan_event(event)
+    except (KeyError, ValueError) as e:
+        raise HTTPException(422, str(e))
+    return dict(status='planned', live=cfg['live'], plan=plan, next_step='Persist and claim the idempotency key, then submit the Glue transform. Agent analysis remains unchanged.')
 
 @app.get('/api/runs')
 def runs():

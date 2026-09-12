@@ -1,6 +1,19 @@
-# Affordable private AWS design for specialist financial firms
+## Embedded agent workflow (AWS API contract)
 
-This is a deployment blueprint, not provisioned infrastructure. The running demo adds a budget calculator and local aggregate incident inbox. Existing trade-log optimization stays available.
+TradeOps embeds AWS in the agent path so specialist firms already on AWS adopt the product without rewriting orchestration:
+
+1. Agents analyze logs locally (deterministic; no LLM).
+2. Every run stages **raw + Parquet + report** onto the **S3** key layout (`raw/{run_id}/…`, `optimized/{run_id}/…`).
+3. An **EventBridge**-shaped “TradeOps Run Completed” event is emitted.
+4. An **Athena** query handle is opened from the Query agent SQL; **Glue** remains the transform worker for Object Created events.
+
+**Local default:** without credentials, the same contract is written under `TRADEOPS_DATA/aws-mirror/` (isomorphic keys/events).  
+**Live AWS:** set `TRADEOPS_AWS_LIVE=1` plus `TRADEOPS_AWS_RAW_BUCKET`, `TRADEOPS_AWS_OPTIMIZED_BUCKET`, `TRADEOPS_AWS_GLUE_JOB` (optional `TRADEOPS_AWS_ATHENA_WORKGROUP`, `TRADEOPS_AWS_EVENT_BUS`, `AWS_REGION`). The agent code path does not change—only the boto3 backend does.
+
+Inspect status via `GET /api/aws/status`. Plan Object Created events via `POST /api/aws/events`. Archive/lifecycle mutations remain disabled until durable approvals exist.
+
+---
+
 
 ## Two data paths
 
