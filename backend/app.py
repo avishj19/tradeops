@@ -302,6 +302,42 @@ def report(id:str):return get(id)
 
 @app.get('/')
 def home():return FileResponse(ROOT/'frontend/index.html')
+# Separate history preserves the original analysis records and approval workflow.
+from . import agent_workflow
+workflow_lock = threading.Lock()
+
+class AIWorkflowRequest(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    run_id: str = Field(pattern=r'^[a-f0-9]{32}$')
+    mode: Literal['local', 'live'] = 'local'
+    query_count: int = Field(default=1000, ge=1, le=1000000, strict=True)
+    consent: bool = False
+
+@app.get('/api/ai-workflows/status')
+def ai_status():
+    return agent_workflow.config()
+
+@app.get('/api/ai-workflows')
+def ai_history():
+    folder = store.desk_dir(DATA) / 'ai-workflows'
+    if not folder.exists(): return []
+    return sorted([json.loads(p.read_text()) for p in folder.glob('*.json')], key=lambda r:r['created'], reverse=True)[:100]
+
+@app.post('/api/ai-workflows')
+def ai_start(body: AIWorkflowRequest):
+    get(body.run_id)  # Check membership in the current desk before resolving any artifact.
+    source = DATA / body.run_id / 'optimized' / 'logs.parquet'
+    if not source.exists(): raise HTTPException(422, 'This analysis has no Parquet dataset. Analyze a sample or upload first.')
+    if body.mode == 'live' and not body.consent:
+        raise HTTPException(422, 'Consent is required to send aggregate measurements to OpenAI.')
+    if not workflow_lock.acquire(blocking=False): raise HTTPException(409, 'An AI experiment is already running. Try again after it finishes.')
+    try:
+        return agent_workflow.run_workflow(source, store.desk_dir(DATA) / 'ai-workflows', body.run_id, body.mode, body.query_count)
+    except ValueError as exc:
+        raise HTTPException(422, str(exc))
+    finally:
+        workflow_lock.release()
+
 app.mount('/static',StaticFiles(directory=ROOT/'frontend'),name='static')
 
 
