@@ -6,7 +6,18 @@ async function api(path,options={}){const r=await fetch('/api'+path,options);if(
 function notice(s){$('#notice').textContent=s}
 function awsPanel(run){const a=run?.aws;if(!a)return '';const live=!!a.live;return `<section class="panel wide"><div class="panel-head"><h2>AWS embedded workflow</h2><span class="tag">${live?'LIVE AWS':'AWS CONTRACT'}</span></div><p>${escape(a.note||'Agent outputs follow the AWS S3→EventBridge→Glue→Athena path used by target cloud deployments.')}</p><div class="metrics"><div class="metric"><label>Mode</label><strong>${escape(a.mode||'—')}</strong><small>${live?'Live boto3 APIs':'Local aws-mirror (same keys)'}</small></div><div class="metric"><label>Region</label><strong>${escape(a.region||'—')}</strong><small>Event bus · ${escape(a.event_bus||'default')}</small></div><div class="metric"><label>Raw</label><strong>S3</strong><small>${escape(a.raw_uri||'')}</small></div><div class="metric"><label>Optimized</label><strong>S3</strong><small>${escape(a.optimized_uri||'')}</small></div></div><p>Glue job <code>${escape(a.glue_job||'')}</code> · Athena workgroup <code>${escape(a.athena_workgroup||'')}</code> · query <code>${escape(a.athena_query_execution_id||'')}</code></p><p>Services: ${(a.services||[]).map(escape).join(' · ')||'s3 · events · glue · athena'}</p></section>`}
 function hardwarePanel(run){const h=run?.hardware_latency;if(!h)return '';const k=h.key_to_frame_ms||{};const a=h.click_to_ack_ms||{};const link=h.linked_execution||null;return `<section class="panel wide"><div class="panel-head"><h2>Desk hardware latency</h2><span class="tag">KEYBOARD · REFRESH</span></div><p>${escape(h.scope||'Workstation input→display path linked to this run.')}</p><div class="metrics"><div class="metric"><label>Refresh</label><strong>${h.refresh_hz?num(Math.round(h.refresh_hz)): '—'} Hz</strong><small>frame budget ${h.frame_budget_ms?h.frame_budget_ms.toFixed(2)+' ms':'—'}</small></div><div class="metric"><label>Key → frame p50</label><strong>${k.p50!=null?k.p50.toFixed(1)+' ms':'—'}</strong><small>p95 ${k.p95!=null?k.p95.toFixed(1)+' ms':'—'}</small></div><div class="metric"><label>Click → ack p50</label><strong>${a.p50!=null?a.p50.toFixed(1)+' ms':'—'}</strong><small>local platform RTT</small></div><div class="metric"><label>Desk share</label><strong>${link?.desk_share_pct!=null?link.desk_share_pct+'%':'—'}</strong><small>vs gateway latency_ms</small></div></div><p class="insight">${escape(h.privacy||'')}</p></section>`}
-async function load(){runs=await api('/runs');historyIndex=null;current=runs.find(r=>r.id===current?.id)||runs[0]||null;render()}
+async function load(){
+ const list=await api('/runs');
+ historyIndex=null;
+ const prefer=current?.id||list[0]?.id;
+ let full=null;
+ if(prefer){
+  full=await api('/runs/'+prefer+'/report').catch(()=>null);
+ }
+ runs=list.map(r=>full&&r.id===full.id?full:r);
+ current=full||(prefer?runs.find(r=>r.id===prefer):null)||null;
+ render();
+}
 function assetClassMix(a){const m=a?.asset_classes||{};const order=['equity','commodity','option','crypto'];const keys=[...order.filter(k=>m[k]),...Object.keys(m).filter(k=>!order.includes(k)).sort()];if(!keys.length)return '';return `<section class="panel wide"><div class="panel-head"><h2>Asset class mix</h2><span class="tag">MULTI-ASSET</span></div><p>Execution logs covering equities, commodities, options and cryptocurrency. Counts are after exact-duplicate removal${a.engine?` · profiled with ${escape(a.engine)}`:''}.</p><div class="metrics">${keys.map(k=>`<div class="metric"><label>${escape(k)}</label><strong>${num(m[k])}</strong><small>verified fills</small></div>`).join('')}</div></section>`}
 function agentList(){return names.map((n,i)=>`<div class="agent"><span class="agent-icon">${['⌘','≋','▱','▥','⌕','$','⋈'][i]}</span><div><b>${n} Agent</b><small>${['Coordination & approvals','Validation & anomalies','Retention & cold storage','Verified Parquet conversion','Partitions & scan reduction','Workload cost estimates','Reference & sequence changes'][i]}</small></div><span class="check">${current?.kind==='market_data'?(['Supervisor','Compression','Cost'].includes(n)?'✓':'N/A'):current?(n==='Sequence Evidence'&&!current.sequence_evidence?'N/A':'✓'):'Ready'}</span></div>`).join('')}
 function render(){document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active',b.dataset.view===view));$('#breadcrumb').textContent={overview:'Overview',experiments:'Experiment lab',agents:'Agent activity',history:'History',architecture:'Architecture',network:'Private AWS plan',incidents:'Incident inbox',desk:'Desk latency',datasets:'Market datasets'}[view];$('#runLabel').textContent=current?'Latest run · '+date(current.created):'Choose a scenario to begin';
@@ -83,7 +94,13 @@ function drawHistory(){
  const query=historySearch.trim().toLowerCase();const items=historyItems().filter(e=>(historyType==='all'||e.type===historyType)&&[e.run.name,e.run.id,e.run.scenario,e.run.source,e.run.approval,e.run.connector?.identity,e.title,e.message].join(' ').toLowerCase().includes(query));
  $('#historySummary').textContent=items.length+' recorded events · '+runs.length+' saved runs';
  $('#historyRows').innerHTML=items.length?`<div class="history-list">${items.map(e=>{const r=e.run;return `<article class="history-entry"><div class="history-stamp"><span class="tag">${{run:'DATASET / RUN',agent:'AGENT',decision:'HUMAN DECISION'}[e.type]}</span><time datetime="${escape(e.time)}">${date(e.time)}</time></div><div class="history-body"><h3>${escape(e.title)}</h3><strong>${escape(r.name)}</strong><p>${escape(e.message)}</p><details><summary>View details & downloads</summary><dl><dt>Run ID</dt><dd>${escape(r.id)}</dd><dt>Source</dt><dd>${escape(r.connector?.identity||r.source||r.scenario)}</dd><dt>Input / Parquet</dt><dd>${bytes(r.before_bytes)} / ${bytes(r.after_bytes)}</dd><dt>Records</dt><dd>${num(r.rows??r.analysis?.rows??0)}</dd><dt>Current approval status</dt><dd>${escape(r.approval.replaceAll('_',' '))}</dd></dl><div class="actions"><button class="secondary" data-history-open="${r.id}">Open full results</button><a href="/api/runs/${r.id}/report" target="_blank" rel="noreferrer">Full JSON report ↗</a><a href="/api/runs/${r.id}/download">Download Parquet ↓</a></div></details></div></article>`}).join('')}</div>`:'<div class="empty"><h3>No matching history</h3><p>Try a different search or filter.</p></div>';
- document.querySelectorAll('[data-history-open]').forEach(b=>b.onclick=()=>{current=runs.find(r=>r.id===b.dataset.historyOpen);view='overview';render()});
+ document.querySelectorAll('[data-history-open]').forEach(b=>b.onclick=async()=>{
+  try{
+   current=await api('/runs/'+b.dataset.historyOpen+'/report');
+   runs=runs.map(r=>r.id===current.id?current:r);
+   view='overview';render();
+  }catch(e){notice(e.message)}
+ });
 }
 
 function sequencePanel(run){

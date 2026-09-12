@@ -1,16 +1,17 @@
-import io, csv, json, os, sqlite3, threading, uuid, zipfile, hashlib
+import io, csv, json, os, threading, uuid, zipfile, hashlib
 from pathlib import Path
 from datetime import datetime, timezone
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Request
 from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.trustedhost import TrustedHostMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, ConfigDict
 from typing import Literal
 from .agents import SupervisorAgent, generate, NAMES
 from .planning import NetworkPlan, network_plan
 from .datasets import optimize_market
 from .hardware_latency import summarize_hardware_samples
+from . import store
 from aws.adapter import embed_run_in_aws, aws_config_from_env
 ROOT=Path(__file__).resolve().parents[1]
 DATA=Path(os.getenv('TRADEOPS_DATA',str(ROOT/'data')))
@@ -18,7 +19,6 @@ DATA.mkdir(parents=True,exist_ok=True)
 lock=threading.RLock()
 app=FastAPI(title='TradeOps Agent API',version='1.0.0')
 app.add_middleware(TrustedHostMiddleware, allowed_hosts=['127.0.0.1','localhost','testserver'])
-_db_ready=set()
 
 def attach_aws(run, data, name, folder):
     """Embed the AWS S3→EventBridge→Glue→Athena contract into every agent run."""
@@ -37,33 +37,27 @@ def attach_aws(run, data, name, folder):
     ))
     return run
 
-def db():
-    path=DATA/'tradeops.db'
-    c=sqlite3.connect(path)
-    key=str(path)
-    # Schema/PRAGMA once per DB path so tests with patched DATA stay correct.
-    if key not in _db_ready:
-        c.execute('CREATE TABLE IF NOT EXISTS runs (id TEXT PRIMARY KEY, payload TEXT NOT NULL)')
-        c.execute('PRAGMA journal_mode=WAL')
-        c.execute('PRAGMA synchronous=NORMAL')
-        _db_ready.add(key)
-    return c
-
 def save(run):
-    with db() as c:c.execute('INSERT OR REPLACE INTO runs VALUES (?,?)',(run['id'],json.dumps(run)))
+    store.save_run(DATA, run)
 
 def get(id):
-    with db() as c:r=c.execute('SELECT payload FROM runs WHERE id=?',(id,)).fetchone()
-    if not r:raise HTTPException(404,'Run not found')
-    return json.loads(r[0])
+    run=store.get_run(DATA, id)
+    if not run:raise HTTPException(404,'Run not found')
+    return run
 
 @app.middleware('http')
 async def local_guard(request:Request,call_next):
     origin=request.headers.get('origin')
     if request.method not in ['GET','HEAD','OPTIONS'] and origin and origin not in ['http://127.0.0.1:8000','http://localhost:8000']:
         return Response('Cross-origin writes forbidden',status_code=403)
+    desk=request.headers.get('x-tradeops-desk') or request.query_params.get('desk')
+    try:
+        store.set_desk(desk)
+    except ValueError as e:
+        return Response(str(e),status_code=400)
     response=await call_next(request)
     response.headers['X-Content-Type-Options']='nosniff'
+    response.headers['X-TradeOps-Desk']=store.get_desk()
     return response
 
 class Demo(BaseModel):
@@ -124,13 +118,45 @@ def plan(body:NetworkPlan):return network_plan(body)
 @app.get('/api/health')
 def health():
     cfg=aws_config_from_env()
+    desks=store.list_desks(DATA)
     return dict(
         status='ok',
         mode='aws_live' if cfg['live'] else 'aws_embedded_local',
         cloud='aws',
+        desk=store.get_desk(),
+        desks=len(desks),
         agents=NAMES,
         aws=dict(live=cfg['live'], region=cfg['region'], raw_bucket=cfg['raw_bucket'], optimized_bucket=cfg['optimized_bucket'], glue_job=cfg['glue_job'], athena_workgroup=cfg['athena_workgroup'], event_bus=cfg['event_bus']),
     )
+
+@app.get('/api/desks')
+def desks():
+    """List local desk databases (one SQLite file per desk)."""
+    items=[]
+    for d in store.list_desks(DATA):
+        path=Path(d['path'])
+        count=0
+        if path.exists():
+            with store.connect(path) as conn:
+                count=conn.execute('SELECT count(*) FROM runs').fetchone()[0]
+        items.append(dict(id=d['id'], path=d['path'], legacy=d['legacy'], runs=count, active=d['id']==store.get_desk()))
+    return dict(desk=store.get_desk(), desks=items)
+
+class DeskCreate(BaseModel):
+    id:str=Field(min_length=1,max_length=64)
+
+@app.post('/api/desks')
+def create_desk(body:DeskCreate):
+    try:
+        desk=store.normalize_desk(body.id)
+    except ValueError as e:
+        raise HTTPException(400,str(e))
+    if desk=='default':
+        path=store.db_path(DATA,'default')
+    else:
+        path=store.db_path(DATA,desk)
+    store.connect(path).close()
+    return dict(id=desk, path=str(path), created=True)
 
 @app.get('/api/aws/status')
 def aws_status():
@@ -163,7 +189,8 @@ def aws_ingest_event(event: dict):
 
 @app.get('/api/runs')
 def runs():
-    with db() as c:return [json.loads(r[0]) for r in c.execute('SELECT payload FROM runs ORDER BY rowid DESC')]
+    """Lean summaries for the workspace list/history. Full payloads via /api/runs/{id}/report."""
+    return store.list_run_summaries(DATA)
 
 @app.post('/api/hardware-latency/ack')
 def hardware_ack():
@@ -277,7 +304,6 @@ def experiment_cost(body: CostScenario):
     return estimate_costs(json.loads(path.read_text()),body)
 
 from .layout_policy import recommend, check_measurement_scope
-from pydantic import Field, ConfigDict
 
 class LayoutRecommendation(BaseModel):
     model_config = ConfigDict(allow_inf_nan=False, extra='forbid')
