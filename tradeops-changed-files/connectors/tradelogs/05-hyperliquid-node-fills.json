@@ -1,0 +1,14 @@
+{
+  "type": "s3",
+  "region": "us-east-1",
+  "bucket": "hl-mainnet-node-data",
+  "prefix": "node_fills/",
+  "dataset": "hyperliquid",
+  "suffix": ".lz4",
+  "max_objects": 1,
+  "max_listed": 100,
+  "request_payer": true,
+  "accept_requester_pays_charges": false,
+  "profile": "YOUR-AWS-PROFILE",
+  "_note": "Set accept_requester_pays_charges to true only after confirming your account will pay request/transfer fees. Narrow the prefix to a symbol/date before scanning."
+}
