@@ -1,0 +1,1 @@
+{"type":"folder","path":"/absolute/path/to/rotated-logs","pattern":"*.jsonl","format":"jsonl","settle_seconds":60}

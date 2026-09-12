@@ -1,0 +1,32 @@
+[
+  {
+    "source": "binance-spot",
+    "key": "data/spot/daily/trades/BTCUSDT/BTCUSDT-trades-2017-08-17.zip",
+    "imported": 1,
+    "repeat_imported": 0,
+    "rows": 3427,
+    "input_bytes": 63039,
+    "parquet_bytes": 109463,
+    "sha256": "a23fe0dae54b7143d5cffb42184e1a05afe7124aaca641cd438297ce83c9f9ec"
+  },
+  {
+    "source": "binance-futures",
+    "key": "data/futures/um/daily/trades/BTCUSDT/BTCUSDT-trades-2019-09-08.zip",
+    "imported": 1,
+    "repeat_imported": 0,
+    "rows": 3754,
+    "input_bytes": 55253,
+    "parquet_bytes": 108827,
+    "sha256": "22a2a3b8b90deab1376a0d2112af9bdce1ccaeaa0db4cbd149d61dd26e311074"
+  },
+  {
+    "source": "bitmex",
+    "key": "data/trade/20141122.csv.gz",
+    "imported": 1,
+    "repeat_imported": 0,
+    "rows": 2,
+    "input_bytes": 263,
+    "parquet_bytes": 2930,
+    "sha256": "73528214965bcfcf022dc51eed710b0d487737f8286e43ecac632b23c1b8430d"
+  }
+]

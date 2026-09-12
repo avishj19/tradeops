@@ -1,0 +1,1 @@
+{"type":"cloudwatch","region":"us-east-1","log_group":"/your/existing/log-group","start_ms":1789084800000,"overlap_ms":300000,"lag_ms":60000,"format":"json"}
