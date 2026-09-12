@@ -10,6 +10,7 @@ from typing import Literal
 from .agents import SupervisorAgent, generate, NAMES
 from .planning import NetworkPlan, network_plan
 from .datasets import optimize_market
+from .hardware_latency import summarize_hardware_samples
 from aws.adapter import embed_run_in_aws, aws_config_from_env
 ROOT=Path(__file__).resolve().parents[1]
 DATA=Path(os.getenv('TRADEOPS_DATA',str(ROOT/'data')))
@@ -72,6 +73,12 @@ class Demo(BaseModel):
 class Decision(BaseModel):
     action:Literal['approve','reject']
     confirm:bool=False
+
+class HardwareLatencyBatch(BaseModel):
+    samples:list[dict]
+    run_id:str|None=None
+    execution_latency_ms:list[float]|None=None
+    workstation:str|None=None
 
 def process(data,name,scenario='uploaded'):
     id=uuid.uuid4().hex
@@ -157,6 +164,61 @@ def aws_ingest_event(event: dict):
 @app.get('/api/runs')
 def runs():
     with db() as c:return [json.loads(r[0]) for r in c.execute('SELECT payload FROM runs ORDER BY rowid DESC')]
+
+@app.post('/api/hardware-latency/ack')
+def hardware_ack():
+    """Tiny ack endpoint used by the desk probe to measure click→platform RTT."""
+    return dict(ok=True, server_time=datetime.now(timezone.utc).isoformat())
+
+@app.post('/api/hardware-latency')
+def hardware_latency(body:HardwareLatencyBatch):
+    """Opt-in workstation probe: refresh rate + input→frame / click→ack timing (no keylogging)."""
+    execution=body.execution_latency_ms
+    linked=None
+    if body.run_id:
+        linked=get(body.run_id)
+        if execution is None:
+            sample=(linked.get('analysis') or {}).get('sample') or []
+            execution=[float(s['latency_ms']) for s in sample if isinstance(s,dict) and 'latency_ms' in s]
+            if not execution:
+                p95=(linked.get('analysis') or {}).get('p95_ms')
+                if p95 is not None:
+                    execution=[float(p95)]
+                else:
+                    thr=(linked.get('analysis') or {}).get('threshold_ms')
+                    if thr is not None:
+                        execution=[float(thr)]
+    try:
+        summary=summarize_hardware_samples(body.samples, execution)
+    except ValueError as e:
+        raise HTTPException(422,str(e))
+    if body.workstation:
+        summary['workstation']=str(body.workstation)[:80]
+    probe_id=uuid.uuid4().hex
+    probe=dict(
+        id=probe_id,
+        kind='hardware_latency',
+        name='desk-probe',
+        scenario='hardware_latency',
+        created=datetime.now(timezone.utc).isoformat(),
+        approval='not_required',
+        hardware=summary,
+        linked_run_id=body.run_id,
+        events=[dict(agent='Supervisor', message='Hardware desk probe ingested (refresh rate + input timing; no key characters stored).', time=datetime.now(timezone.utc).isoformat())],
+        before_bytes=0,
+        after_bytes=0,
+        reduction_pct=0,
+    )
+    save(probe)
+    if linked is not None:
+        linked['hardware_latency']=summary
+        linked.setdefault('events',[]).append(dict(
+            agent='Supervisor',
+            message=f"Linked desk hardware probe {probe_id}: refresh≈{summary.get('refresh_hz')} Hz; key→frame p50={((summary.get('key_to_frame_ms') or {}).get('p50'))} ms.",
+            time=datetime.now(timezone.utc).isoformat(),
+        ))
+        save(linked)
+    return dict(probe_id=probe_id, linked_run_id=body.run_id, hardware=summary)
 
 @app.post('/api/demo')
 def demo(body:Demo):
