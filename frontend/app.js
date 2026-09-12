@@ -20,8 +20,9 @@ async function load(){
 }
 function assetClassMix(a){const m=a?.asset_classes||{};const order=['equity','commodity','option','crypto'];const keys=[...order.filter(k=>m[k]),...Object.keys(m).filter(k=>!order.includes(k)).sort()];if(!keys.length)return '';return `<section class="panel wide"><div class="panel-head"><h2>Asset class mix</h2><span class="tag">MULTI-ASSET</span></div><p>Execution logs covering equities, commodities, options and cryptocurrency. Counts are after exact-duplicate removal${a.engine?` · profiled with ${escape(a.engine)}`:''}.</p><div class="metrics">${keys.map(k=>`<div class="metric"><label>${escape(k)}</label><strong>${num(m[k])}</strong><small>verified fills</small></div>`).join('')}</div></section>`}
 function agentList(){return names.map((n,i)=>`<div class="agent"><span class="agent-icon">${['⌘','≋','▱','▥','⌕','$','⋈'][i]}</span><div><b>${n} Agent</b><small>${['Coordination & approvals','Validation & anomalies','Retention & cold storage','Verified Parquet conversion','Partitions & scan reduction','Workload cost estimates','Reference & sequence changes'][i]}</small></div><span class="check">${current?.kind==='market_data'?(['Supervisor','Compression','Cost'].includes(n)?'✓':'N/A'):current?(n==='Sequence Evidence'&&!current.sequence_evidence?'N/A':'✓'):'Ready'}</span></div>`).join('')}
-function render(){document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active',b.dataset.view===view));$('#breadcrumb').textContent={overview:'Overview',experiments:'Experiment lab',agents:'Agent activity',history:'History',architecture:'Architecture',network:'Private AWS plan',incidents:'Incident inbox',desk:'Desk latency',datasets:'Market datasets'}[view];$('#runLabel').textContent=current?'Latest run · '+date(current.created):'Choose a scenario to begin';
+function render(){document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active',b.dataset.view===view));$('#breadcrumb').textContent={overview:'Overview',experiments:'Experiment lab',agents:'Agent activity',optimize:'Optimization arena',history:'History',architecture:'Architecture',network:'Private AWS plan',incidents:'Incident inbox',desk:'Desk latency',datasets:'Market datasets'}[view];$('#runLabel').textContent=current?'Latest run · '+date(current.created):'Choose a scenario to begin';
 if(view==='experiments'){renderExperiments();return}
+if(view==='optimize'){renderOptimize();return}
 if(view==='datasets'){renderDatasets();return}
 if(view==='network'){renderNetwork();return}
 if(view==='desk'){renderDesk();return}
@@ -42,6 +43,48 @@ $('#upload').onchange=e=>{const file=e.target.files[0];if(!file)return;busy(asyn
 async function decide(action){try{current=await api('/runs/'+current.id+'/decision',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,confirm:action==='approve'})});$('#approvalDialog').close();await load();notice(action==='approve'?'Raw file archived locally. Original evidence remains recoverable.':'Archive recommendation rejected.')}catch(e){notice(e.message)}}
 $('#cancel').onclick=()=>$('#approvalDialog').close();$('#confirm').onclick=()=>decide('approve');document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{view=b.dataset.view;render()});load().catch(e=>notice(e.message));
 
+let arenaResult=null;
+function arenaMetric(label,before,after,unit,note){
+ const fmt=v=>{if(v==null||v==='')return '—';if(typeof v==='number')return (Math.round(v*10)/10)+unit;return v+unit};
+ return `<div class="arena-metric"><label>${escape(label)}</label><div class="arena-compare"><span class="before"><small>BEFORE</small><strong>${escape(fmt(before))}</strong></span><span class="arrow">→</span><span class="after"><small>AFTER</small><strong>${escape(fmt(after))}</strong></span></div><p>${escape(note||'')}</p></div>`;
+}
+function renderArena(result){
+ if(!result){
+  $('#content').innerHTML=`<section class="panel arena"><div class="eyebrow">HACKCMU · OPTIMIZATION TRACK</div><h2 style="margin-top:10px">Live before → after arena</h2><p>One click re-measures three bottlenecks on <em>this</em> machine: hot-path dedupe, run-list payload shape, and SQLite writer contention.</p><button id="arenaRun" class="primary">▶ Run live measurement</button><p class="insight">Judges see measured wins, not a feature tour.</p></section>`;
+  $('#arenaRun').onclick=()=>runArena();
+  return;
+ }
+ const h=result.headline||{};const m=result.measurements||{};
+ const hot=m.hotpath||{};const list=m.list_shape||{};const busy=m.contention||{};
+ $('#content').innerHTML=`<section class="panel arena"><div class="panel-head"><div><div class="eyebrow">HACKCMU · OPTIMIZATION TRACK</div><h2 style="margin-top:10px">Live before → after arena</h2></div><span class="tag">MEASURED · ${escape(date(result.created))}</span></div>
+ <p class="arena-headline">${escape(h.line||'')}</p>
+ <p>${escape(h.track_fit||'')}</p>
+ <div class="arena-grid">
+  ${arenaMetric('Hot-path dedupe/profile', hot.before_ms, hot.after_ms, ' ms', (hot.speedup_x?hot.speedup_x+'× · ':'')+(hot.pitch||''))}
+  ${arenaMetric('Run-list payload', list.before_bytes!=null?(list.before_bytes/1024).toFixed(0):null, list.after_bytes!=null?(list.after_bytes/1024).toFixed(0):null, ' KB', (list.bytes_reduction_pct!=null?list.bytes_reduction_pct+'% smaller · ':'')+(list.pitch||''))}
+  ${arenaMetric('Lock errors @ '+ (busy.workers||'?') +' writers', busy.before_errors, busy.after_errors, '', (busy.pitch||''))}
+ </div>
+ <div class="actions" style="margin-top:18px"><button id="arenaRun" class="primary">↻ Re-measure on this machine</button></div>
+ <details class="arena-script"><summary>3-minute pitch script</summary><ol>${(result.pitch_script||[]).map(s=>`<li>${escape(s)}</li>`).join('')}</ol></details>
+ <details><summary>Honesty limits</summary><ul>${(result.honesty||[]).map(s=>`<li>${escape(s)}</li>`).join('')}</ul></details>
+ </section>`;
+ $('#arenaRun').onclick=()=>runArena();
+}
+async function runArena(){
+ notice('Measuring before/after on this host…');
+ try{
+  arenaResult=await api('/optimize/arena',{method:'POST'});
+  notice('Arena measurement ready.');
+  if(view==='optimize')renderArena(arenaResult);
+ }catch(e){notice(e.message)}
+}
+async function renderOptimize(){
+ $('#content').innerHTML=`<section class="panel"><h2>Loading arena…</h2></section>`;
+ if(!arenaResult){
+  try{arenaResult=await api('/optimize/arena')}catch(_){arenaResult=null}
+ }
+ renderArena(arenaResult);
+}
 
 function renderDesk(){
  const live=window.DeskProbe?DeskProbe.liveStats():{active:false,samples:0};

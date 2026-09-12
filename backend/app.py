@@ -12,6 +12,7 @@ from .planning import NetworkPlan, network_plan
 from .datasets import optimize_market
 from .hardware_latency import summarize_hardware_samples
 from . import store
+from . import optimize_arena
 from aws.adapter import embed_run_in_aws, aws_config_from_env
 ROOT=Path(__file__).resolve().parents[1]
 DATA=Path(os.getenv('TRADEOPS_DATA',str(ROOT/'data')))
@@ -191,6 +192,21 @@ def aws_ingest_event(event: dict):
 def runs():
     """Lean summaries for the workspace list/history. Full payloads via /api/runs/{id}/report."""
     return store.list_run_summaries(DATA)
+
+@app.get('/api/optimize/arena')
+def optimize_arena_latest():
+    """Last measured before/after optimization arena result (HackCMU pitch view)."""
+    latest = optimize_arena.load_latest(DATA)
+    if not latest:
+        raise HTTPException(404, 'No arena measurement yet. POST /api/optimize/arena to run one.')
+    return latest
+
+@app.post('/api/optimize/arena')
+def optimize_arena_run():
+    """Re-measure hot path, list shape, and SQLite contention on this machine."""
+    result = optimize_arena.run_arena()
+    optimize_arena.persist_latest(DATA, result)
+    return result
 
 @app.post('/api/hardware-latency/ack')
 def hardware_ack():
